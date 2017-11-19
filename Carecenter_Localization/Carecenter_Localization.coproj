@@ -31,7 +31,7 @@
           <Memory name="IROM2" type="ReadOnly" size="" startValue=""/>
           <Memory name="IRAM2" type="ReadWrite" size="" startValue=""/>
         </MemoryAreas>
-        <LocateLinkFile path="../../../appdata/roaming/coocox/coide/configuration/programdata/carecenter_localization/link.ld" type="0"/>
+        <LocateLinkFile path="../../../../appdata/roaming/coocox/coide/configuration/programdata/carecenter_localization/link.ld" type="0"/>
       </Link>
       <Output>
         <Option name="OutputFileType" value="0"/>
@@ -75,14 +75,14 @@
     <File name="components/X-NUCLEO-IKS01A1/X_NUCLEO_IKS01A1/x_nucleo_iks01a1_pressure.h" path="components/coocox-master/X-NUCLEO-IKS01A1/source/X_NUCLEO_IKS01A1/x_nucleo_iks01a1_pressure.h" type="1"/>
     <File name="components/X-NUCLEO-IKS01A1/Components/LSM303AGRMagSensor.h" path="../../../Desktop/LSM303AGR/LSM303AGRMagSensor.h" type="1"/>
     <File name="components/X-NUCLEO-IKS01A1/Components/LPS22HBSensor.h" path="../../../Desktop/LPS22HB/LPS22HBSensor.h" type="1"/>
-    <File name="components/X-NUCLEO-IKS01A1/X_NUCLEO_IKS01A1" path="" type="2"/>
     <File name="components/X-NUCLEO-IKS01A1/X_NUCLEO_IKS01A1/x_nucleo_iks01a1_imu_6axes.c" path="components/coocox-master/X-NUCLEO-IKS01A1/source/X_NUCLEO_IKS01A1/x_nucleo_iks01a1_imu_6axes.c" type="1"/>
+    <File name="components/X-NUCLEO-IKS01A1/X_NUCLEO_IKS01A1" path="" type="2"/>
     <File name="components/X-NUCLEO-IKS01A1/Components/LSM303AGR_mag_driver.c" path="../../../Desktop/LSM303AGR/LSM303AGR_mag_driver.c" type="1"/>
     <File name="components/cmsis_core/core_cmInstr.h" path="components/coocox-master/cmsis_core/source/core_cmInstr.h" type="1"/>
     <File name="components/cmsis_core/core_cm7.h" path="components/coocox-master/cmsis_core/source/core_cm7.h" type="1"/>
+    <File name="components/cmsis_core/core_cmFunc.h" path="components/coocox-master/cmsis_core/source/core_cmFunc.h" type="1"/>
     <File name="components/cmsis_core" path="" type="2"/>
     <File name="components/X-NUCLEO-IKS01A1" path="" type="2"/>
-    <File name="components/cmsis_core/core_cmFunc.h" path="components/coocox-master/cmsis_core/source/core_cmFunc.h" type="1"/>
     <File name="components/X-NUCLEO-IKS01A1/X_NUCLEO_IKS01A1/stm32f4xx_nucleo.h" path="components/coocox-master/X-NUCLEO-IKS01A1/source/X_NUCLEO_IKS01A1/stm32f4xx_nucleo.h" type="1"/>
     <File name="components/X-NUCLEO-IKS01A1/XNucleoIKS01A2.h" path="../../../Desktop/XNucleoIKS01A2.h" type="1"/>
     <File name="components/X-NUCLEO-IKS01A1/X_NUCLEO_IKS01A1/stm32l1xx_nucleo.h" path="components/coocox-master/X-NUCLEO-IKS01A1/source/X_NUCLEO_IKS01A1/stm32l1xx_nucleo.h" type="1"/>
@@ -93,8 +93,8 @@
     <File name="components/X-NUCLEO-IKS01A1/X_NUCLEO_IKS01A1/stm32l4xx_nucleo.c" path="components/coocox-master/X-NUCLEO-IKS01A1/source/X_NUCLEO_IKS01A1/stm32l4xx_nucleo.c" type="1"/>
     <File name="components/X-NUCLEO-IKS01A1/X_NUCLEO_IKS01A1/stm32l0xx_nucleo.c" path="components/coocox-master/X-NUCLEO-IKS01A1/source/X_NUCLEO_IKS01A1/stm32l0xx_nucleo.c" type="1"/>
     <File name="components/X-NUCLEO-IKS01A1/Components/LPS22HB_driver.c" path="../../../Desktop/LPS22HB/LPS22HB_driver.c" type="1"/>
-    <File name="components/cmsis_core/core_cm4_simd.h" path="components/coocox-master/cmsis_core/source/core_cm4_simd.h" type="1"/>
     <File name="components/X-NUCLEO-IKS01A1/X_NUCLEO_IKS01A1/x_nucleo_iks01a1_magneto.c" path="components/coocox-master/X-NUCLEO-IKS01A1/source/X_NUCLEO_IKS01A1/x_nucleo_iks01a1_magneto.c" type="1"/>
+    <File name="components/cmsis_core/core_cm4_simd.h" path="components/coocox-master/cmsis_core/source/core_cm4_simd.h" type="1"/>
     <File name="components/X-NUCLEO-IKS01A1/X_NUCLEO_IKS01A1/stm32l4xx_nucleo.h" path="components/coocox-master/X-NUCLEO-IKS01A1/source/X_NUCLEO_IKS01A1/stm32l4xx_nucleo.h" type="1"/>
     <File name="components/X-NUCLEO-IKS01A1/Components/LSM303AGR_acc_driver.h" path="../../../Desktop/LSM303AGR/LSM303AGR_acc_driver.h" type="1"/>
     <File name="components/cmsis_core/core_cm0plus.h" path="components/coocox-master/cmsis_core/source/core_cm0plus.h" type="1"/>
@@ -105,18 +105,18 @@
     <File name="components/cmsis_core/core_sc000.h" path="components/coocox-master/cmsis_core/source/core_sc000.h" type="1"/>
     <File name="components/cmsis_core/core_cm0.h" path="components/coocox-master/cmsis_core/source/core_cm0.h" type="1"/>
     <File name="components/X-NUCLEO-IKS01A1/Components/LSM303AGRMagSensor.cpp" path="../../../Desktop/LSM303AGR/LSM303AGRMagSensor.cpp" type="1"/>
-    <File name="components/X-NUCLEO-IKS01A1/X_NUCLEO_IKS01A1/stm32l0xx_nucleo.h" path="components/coocox-master/X-NUCLEO-IKS01A1/source/X_NUCLEO_IKS01A1/stm32l0xx_nucleo.h" type="1"/>
     <File name="components/X-NUCLEO-IKS01A1/Components/LPS22HB_driver.h" path="../../../Desktop/LPS22HB/LPS22HB_driver.h" type="1"/>
+    <File name="components/X-NUCLEO-IKS01A1/X_NUCLEO_IKS01A1/stm32l0xx_nucleo.h" path="components/coocox-master/X-NUCLEO-IKS01A1/source/X_NUCLEO_IKS01A1/stm32l0xx_nucleo.h" type="1"/>
     <File name="components/cmsis_core/core_cmSimd.h" path="components/coocox-master/cmsis_core/source/core_cmSimd.h" type="1"/>
     <File name="components/cmsis_core/core_cm3.h" path="components/coocox-master/cmsis_core/source/core_cm3.h" type="1"/>
-    <File name="components/X-NUCLEO-IKS01A1/Components/LPS22HBSensor.cpp" path="../../../Desktop/LPS22HB/LPS22HBSensor.cpp" type="1"/>
     <File name="components/X-NUCLEO-IKS01A1/x_nucleo_iks01a2_targets.h" path="../../../Desktop/x_nucleo_iks01a2_targets.h" type="1"/>
-    <File name="components/X-NUCLEO-IKS01A1/Components/LSM303AGR_mag_driver.h" path="../../../Desktop/LSM303AGR/LSM303AGR_mag_driver.h" type="1"/>
+    <File name="components/X-NUCLEO-IKS01A1/Components/LPS22HBSensor.cpp" path="../../../Desktop/LPS22HB/LPS22HBSensor.cpp" type="1"/>
     <File name="components/X-NUCLEO-IKS01A1/Components/LSM303AGRAccSensor.h" path="../../../Desktop/LSM303AGR/LSM303AGRAccSensor.h" type="1"/>
+    <File name="components/X-NUCLEO-IKS01A1/Components/LSM303AGR_mag_driver.h" path="../../../Desktop/LSM303AGR/LSM303AGR_mag_driver.h" type="1"/>
     <File name="components/X-NUCLEO-IKS01A1/X_NUCLEO_IKS01A1/x_nucleo_iks01a1_pressure.c" path="components/coocox-master/X-NUCLEO-IKS01A1/source/X_NUCLEO_IKS01A1/x_nucleo_iks01a1_pressure.c" type="1"/>
     <File name="components/X-NUCLEO-IKS01A1/Components/LSM303AGR_acc_driver.c" path="../../../Desktop/LSM303AGR/LSM303AGR_acc_driver.c" type="1"/>
-    <File name="components/X-NUCLEO-IKS01A1/X_NUCLEO_IKS01A1/x_nucleo_iks01a1.h" path="components/coocox-master/X-NUCLEO-IKS01A1/source/X_NUCLEO_IKS01A1/x_nucleo_iks01a1.h" type="1"/>
     <File name="components/X-NUCLEO-IKS01A1/X_NUCLEO_IKS01A1/stm32l1xx_nucleo.c" path="components/coocox-master/X-NUCLEO-IKS01A1/source/X_NUCLEO_IKS01A1/stm32l1xx_nucleo.c" type="1"/>
+    <File name="components/X-NUCLEO-IKS01A1/X_NUCLEO_IKS01A1/x_nucleo_iks01a1.h" path="components/coocox-master/X-NUCLEO-IKS01A1/source/X_NUCLEO_IKS01A1/x_nucleo_iks01a1.h" type="1"/>
     <File name="components/X-NUCLEO-IKS01A1/XNucleoIKS01A2.cpp" path="../../../Desktop/XNucleoIKS01A2.cpp" type="1"/>
     <File name="components/cmsis_core/core_cm4.h" path="components/coocox-master/cmsis_core/source/core_cm4.h" type="1"/>
     <File name="components/X-NUCLEO-IKS01A1/X_NUCLEO_IKS01A1/x_nucleo_iks01a1_imu_6axes.h" path="components/coocox-master/X-NUCLEO-IKS01A1/source/X_NUCLEO_IKS01A1/x_nucleo_iks01a1_imu_6axes.h" type="1"/>
