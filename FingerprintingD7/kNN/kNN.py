@@ -108,6 +108,7 @@ client = mqtt.Client(protocol=mqtt.MQTTv31)
 client.on_connect = on_connect
 client.on_message = on_message
 
+client.username_pw_set("student", "cv1Dq6GXL9cqsStSHKp5")
 client.connect("backend.idlab.uantwerpen.be", 1883, 60)
 
 
