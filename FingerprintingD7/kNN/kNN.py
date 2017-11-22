@@ -37,6 +37,8 @@ def on_message(client, userdata, msg):
                 if element == 0:
                     matrix[idx] = 99
             neighbors = getNeighbors(trainPs, matrix, k)
+            location = calculateLocation(neighbors)
+            print location
             print matrix
             print 'Distance: ' + repr(neighbors)
 
@@ -75,6 +77,16 @@ def loadDataset(filename):
     return trainPs
 
 
+def loadLocations(filename):
+    f = open(filename, 'r')
+    locations = []
+    for line in f:
+        location = [int(x) for x in line.rstrip('\n').split(',')]
+        locations.append(location)
+    f.close()
+    return locations
+
+
 def euclideanDistance(instance1, instance2, length):
     distance = 0
     for x in range(length):                     # x+1 because first element is location
@@ -103,7 +115,27 @@ def getNeighbors(trainingSet, testInstance, k):
         neighbors.append(distances[x][0])  # put the first k distances in neighbors
     return neighbors
 
+
+def calculateLocation(neighbors):
+    global locations
+    neighLocs = []
+    for neighbor in neighbors:
+        for location in locations:
+            if neighbors[neighbor][0] == locations[location]:
+                neighLocs.append(locations[location])
+    sumx = 0
+    sumy = 0
+    for neighLoc in neighLocs:
+        sumx += neighLocs[neighLoc][1]
+        sumy += neighLocs[neighLoc][2]
+    meanX = sumx/len(neighLocs)
+    meanY = sumy/len(neighLocs)
+    location = (meanX, meanY)
+    return location
+
+
 trainPs = loadDataset('database-test.txt')
+locations = loadLocations('locations.txt')
 
 client = mqtt.Client(protocol=mqtt.MQTTv31)
 client.on_connect = on_connect
