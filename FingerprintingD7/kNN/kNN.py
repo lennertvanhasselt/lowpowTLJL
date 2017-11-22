@@ -35,7 +35,7 @@ def on_message(client, userdata, msg):
         if reset:
             for idx, element in enumerate(matrix):
                 if element == 0:
-                    matrix[idx] = 85
+                    matrix[idx] = 99
             neighbors = getNeighbors(trainPs, matrix, k)
             print matrix
             print 'Distance: ' + repr(neighbors)
@@ -66,7 +66,8 @@ def loadDataset(filename):
     f = open(filename, 'r')
     trainPs = []
     for line in f:  # delete '(' and ')\n'. Split on ', '.
-        trainP = [int(x) for x in line.lstrip('(').rstrip(')\n').split(', ')]
+        # trainP = [int(x) for x in line.lstrip('(').rstrip(')\n').split(',')]
+        trainP = [int(x) for x in line.rstrip('\n').split(',')]
         trainPs.append(trainP)
     # for x in range(len(trainPs)):
     #    print trainPs[x]
