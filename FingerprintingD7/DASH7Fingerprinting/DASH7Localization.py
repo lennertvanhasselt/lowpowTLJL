@@ -2,6 +2,7 @@ import json
 import paho.mqtt.client as mqtt
 import winsound
 
+
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code " + str(rc))
@@ -47,7 +48,6 @@ def on_message(client, userdata, msg):
         if counter == 5:
             client.disconnect()                                     # disconnect MQTT broker
             winsound.Beep(840, 250)
-
 
 
 # Write entry to datasbase in the format (nr,RSSI1,RSSI2,RSSI3,RSSI4)
