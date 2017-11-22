@@ -1,10 +1,10 @@
 import json
 import paho.mqtt.client as mqtt
-
+import winsound
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
-    print("Connected with result code "+str(rc))
+    print("Connected with result code " + str(rc))
 
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
@@ -16,14 +16,14 @@ def on_message(client, userdata, msg):
     # print(msg.topic+" "+str(msg.payload))
     data = json.loads(str(msg.payload))
 
-    global previous_time, reset, rssis, gateways
+    global previous_time, rssis, gateways, counter
     actual_time = float(data['timestamp'][-8:])
-    if previous_time > 8 and actual_time < 2 or previous_time < actual_time - 1:    # kNN: node stuurt bericht --> reset bij ...
-        reset = True                                                                # database creatie: wacht op bericht van GW die nog niet heeft geantwoord
+    if previous_time > 8 and actual_time < 2 or previous_time < actual_time - 1:  # database creatie: wacht op bericht van GW die nog niet heeft geantwoord
         previous_time = actual_time
 
-    if reset:
+    if len(gateways) == 4:
         del gateways[:]
+        counter += 1
 
     elif data['node'] == '43373134003e0041':                          # Check node ID
         if data['gateway'] not in gateways:
@@ -42,16 +42,19 @@ def on_message(client, userdata, msg):
             else:
                 print('GW not found!')
 
-    if len(gateways) == 4:                                          # wait for 4 messages of different gateways,
-        client.disconnect()                                         # disconnect,
+    if len(gateways) == 4:                                          # wait for 4 messages of 4 different gateways,
         write_database(rssis)                                       # and write data to database
+        if counter == 5:
+            client.disconnect()                                     # disconnect MQTT broker
+            winsound.Beep(840, 250)
+
 
 
 # Write entry to datasbase in the format (nr,RSSI1,RSSI2,RSSI3,RSSI4)
 def write_database(rssis):
-    database = open('testdatabase.txt', 'a')                        # Open database
-    training_point_number = 1                                       # @ TODO change training point number!!!
-    database.write(str(training_point_number) + rssis[0] + ',' + rssis[1] + ',' + rssis[2] + ',' + rssis[3] + '\n')
+    database = open('database.txt', 'a')                            # Open database
+    global training_point_number
+    database.write(str(training_point_number) + ',' + str(rssis[0]) + ',' + str(rssis[1]) + ',' + str(rssis[2]) + ',' + str(rssis[3]) + '\n')
     database.close()                                                # Close database
 
 ################################################################
@@ -59,8 +62,8 @@ def write_database(rssis):
 gateways = []
 rssis = [0, 0, 0, 0]
 previous_time = 0.0
-reset = False
-
+counter = 0
+training_point_number = input('Give trainingspoint location')
 
 client = mqtt.Client(protocol=mqtt.MQTTv31)
 client.on_connect = on_connect
