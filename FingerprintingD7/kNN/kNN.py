@@ -5,7 +5,7 @@ import operator
 import json
 import paho.mqtt.client as mqtt
 
-k = 2
+k = 5
 
 matrix = [0, 0, 0, 0]
 previoustime = 0.0
@@ -39,7 +39,6 @@ def on_message(client, userdata, msg):
             neighbors = getNeighbors(trainPs, matrix, k)
             location = calculateLocation(neighbors)
             print location
-            print matrix
             print 'Distance: ' + repr(neighbors)
 
             reset = False
@@ -119,22 +118,22 @@ def getNeighbors(trainingSet, testInstance, k):
 def calculateLocation(neighbors):
     global locations
     neighLocs = []
-    for neighbor in neighbors:
+    for x in range(len(neighbors)):
         for location in locations:
-            if neighbors[neighbor][0] == locations[location]:
-                neighLocs.append(locations[location])
+            if neighbors[x][0] == location[0]:
+                neighLocs.append(location)
     sumx = 0
     sumy = 0
     for neighLoc in neighLocs:
-        sumx += neighLocs[neighLoc][1]
-        sumy += neighLocs[neighLoc][2]
+        sumx += neighLoc[1]
+        sumy += neighLoc[2]
     meanX = sumx/len(neighLocs)
     meanY = sumy/len(neighLocs)
     location = (meanX, meanY)
     return location
 
 
-trainPs = loadDataset('database-test.txt')
+trainPs = loadDataset('database.txt')
 locations = loadLocations('locations.txt')
 
 client = mqtt.Client(protocol=mqtt.MQTTv31)
