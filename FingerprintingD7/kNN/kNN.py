@@ -38,7 +38,7 @@ def on_message(client, userdata, msg):
                     matrix[idx] = 99
             neighbors = getNeighbors(trainPs, matrix, k)
             location = calculateLocation(neighbors)
-            print location
+            print repr(location)
             print 'Distance: ' + repr(neighbors)
 
             reset = False
@@ -131,7 +131,6 @@ def calculateLocation(neighbors):
     meanY = sumy/len(neighLocs)
     location = (meanX, meanY)
     return location
-
 
 trainPs = loadDataset('database.txt')
 locations = loadLocations('locations.txt')
