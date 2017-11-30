@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# !/usr/bin/env python
 
 from __future__ import print_function
 import argparse
@@ -15,7 +15,6 @@ import math
 import operator
 import json
 import paho.mqtt.client as mqtt
-
 from d7a.alp.command import Command
 from d7a.alp.operations.responses import ReturnFileData
 from d7a.system_files.system_file_ids import SystemFileIds
@@ -23,7 +22,6 @@ from d7a.system_files.system_files import SystemFiles
 from modem.modem import Modem
 import time
 from pprint import pprint
-
 from tb_api_client import swagger_client
 from tb_api_client.swagger_client import ApiClient, Configuration
 from tb_api_client.swagger_client.rest import ApiException
@@ -36,9 +34,9 @@ class BackendExample:
         argparser.add_argument("-b", "--broker", help="mqtt broker hostname", default="localhost")
         argparser.add_argument("-u", "--url", help="URL of the thingsboard server", default="http://localhost:8080")
         argparser.add_argument("-t", "--token", help="token to access the thingsboard API", required=True)
-        argparser.add_argument("-us", "--username", help="Username to access broker", default="none")
-        argparser.add_argument("-pw", "--password", help="Password to access broker", default="none")
-        argparser.add_argument("-k", "--k", help="Amount of neighbours", default=2)
+	argparser.add_argument("-us", "--username", help="Username to access broker", default="none")
+	argparser.add_argument("-pw", "--password", help="Password to access broker", default="none")
+	argparser.add_argument("-k", "--k", help="Amount of neighbours", default=2)
         self.mq = None
         self.connected_to_mqtt = False
 
@@ -61,10 +59,10 @@ class BackendExample:
         self.mq.on_connect = self.on_mqtt_connect
         self.mq.on_message = self.on_mqtt_message
         if self.config.username!="none":
-                self.mq.username_pw_set(self.config.username, self.config.password)
-        self.mq.connect(self.config.broker, 1883, 60)
+		self.mq.username_pw_set(self.config.username, self.config.password)
+	self.mq.connect(self.config.broker, 1883, 60)
         # self.mq.loop_forever()
-        self.mq.loop_start()
+	self.mq.loop_start()
         while not self.connected_to_mqtt: pass  # busy wait until connected
         print("Connected to MQTT broker on {}".format(
           self.config.broker,
@@ -72,50 +70,48 @@ class BackendExample:
 
     def on_mqtt_connect(self, client, config, flags, rc):
         # self.mq.subscribe("/tb")
-        self.mq.subscribe("/localisation/#")
+	self.mq.subscribe("/localisation/#")
         self.connected_to_mqtt = True
 
     def on_mqtt_message(self, client, config, msg):
-        global previoustime, matrix, reset, trainPs, k, location
-        # print(msg.topic+" "+str(msg.payload))
-        k=int(self.config.k)
-        data = json.loads(str(msg.payload))
-        if data['node'] == '43373134003e0041':
-                entry = (data['gateway'], data['link_budget'], data['timestamp'])
-                actualtime=float(data['timestamp'][-8:])
-                if previoustime > 8 and actualtime < 2 or previoustime < actualtime-1:
-                        reset = True
-                        previoustime = actualtime
+	global previoustime, matrix, reset, trainPs, k, location
+	# print(msg.topic+" "+str(msg.payload))
+	k=int(self.config.k)
+	data = json.loads(str(msg.payload))
+	if data['node'] == '43373134003e0041':
+        	entry = (data['gateway'], data['link_budget'], data['timestamp'])
+        	actualtime=float(data['timestamp'][-8:])
+        	if previoustime > 8 and actualtime < 2 or previoustime < actualtime-1:
+            		reset = True
+            		previoustime = actualtime
 
-                if reset:
-                        for idx, element in enumerate(matrix):
-                                if element == 0:
-                                        matrix[idx] = 99
-                        neighbors = self.getNeighbors(trainPs, matrix, k)
-                        location = self.calculateLocation(neighbors)
-                        print(str(location))
-                        print('Distance: ' + repr(neighbors))
+        	if reset:
+            		for idx, element in enumerate(matrix):
+                		if element == 0:
+                    			matrix[idx] = 99
+            		neighbors = self.getNeighbors(trainPs, matrix, k)
+            		location = self.calculateLocation(neighbors)
+            		print(str(location))
+            		print('Distance: ' + repr(neighbors))
 
-                        reset = False
-                        matrix = [0, 0, 0, 0]
+            		reset = False
+            		matrix = [0, 0, 0, 0]
 
-                gateway = data['gateway']
-                if gateway[0:5] == 'b6b48':
-                        matrix[0] = data['link_budget']
-                elif gateway[0:5] == 'f1f7e':
-                        matrix[1] = data['link_budget']
-                elif gateway[0:5] == 'c2c4e':
-                        matrix[2] = data['link_budget']
-                elif gateway[0:5] == '43e01':
-                        matrix[3] = data['link_budget']
-                else:
-                        print ("gateway not found   " + gateway[0:5])
-
-        '''
-        global location
-        # msg contains already parsed command in ALP in JSON
-		global location
-        # msg contains already parsed command in ALP in JSON
+        	gateway = data['gateway']
+        	if gateway[0:5] == 'b6b48':
+            		matrix[0] = data['link_budget']
+        	elif gateway[0:5] == 'f1f7e':
+            		matrix[1] = data['link_budget']
+        	elif gateway[0:5] == 'c2c4e':
+            		matrix[2] = data['link_budget']
+        	elif gateway[0:5] == '43e01':
+            		matrix[3] = data['link_budget']
+        	else:
+            		print ("gateway not found   " + gateway[0:5])         
+        
+	'''
+ 	global location
+	# msg contains already parsed command in ALP in JSON
         print("ALP Command received from TB: {}".format(msg.payload))
         try:
           obj = jsonpickle.json.loads(msg.payload)
@@ -137,12 +133,12 @@ class BackendExample:
             my_sensor_value = struct.unpack("L", bytearray(action.operand.data))[0] # parse binary payload (adapt to your needs)
             print("node {} sensor value {}".format(node_id, my_sensor_value))
         '''
-
-        # save the parsed sensor data as an attribute to the device, using the TB API
+        
+	# save the parsed sensor data as an attribute to the device, using the TB API
         try:
           # first get the deviceId mapped to the device name
-          gateway = data['node']
-          node_id = gateway
+	  gateway = data['node']
+	  node_id = gateway
           response = self.device_controller_api.get_tenant_device_using_get(device_name=str(node_id))
           device_id = response.id.id
 
@@ -155,7 +151,7 @@ class BackendExample:
             device_token=device_access_token,
             json={"X":location[0],"Y":location[1]}
           )
-          # print(str(location[0])+"   "+str(location[1]))
+	  # print(str(location[0])+"   "+str(location[1]))
           print("Updated my_sensor attribute for node {}".format(node_id))
         except ApiException as e:
           print("Exception when calling API: %s\n" % e)
@@ -172,11 +168,11 @@ class BackendExample:
         print("Started")
         keep_running = True
         while keep_running:
-            try:
-                signal.pause()
-            except KeyboardInterrupt:
-                print("received KeyboardInterrupt... stopping processing")
-                keep_running = False
+          try:
+            signal.pause()
+          except KeyboardInterrupt:
+            print("received KeyboardInterrupt... stopping processing")
+            keep_running = False
 
                 # The callback for when the client receives a CONNACK response from the server.
     '''
@@ -201,7 +197,7 @@ class BackendExample:
             if reset:
                 for idx, element in enumerate(matrix):
                     if element == 0:
-                        matrix[idx] = 99
+                        matrix[idx] = 0
                 neighbors = getNeighbors(trainPs, matrix, k)
                 location = calculateLocation(neighbors)
                 print(location)
@@ -228,7 +224,7 @@ class BackendExample:
                 # matrix.append(entry)
                 # sizeMatrix = len(matrix)
     '''
-	
+
     def loadDataset(self, filename):
         f = open(filename, 'r')
         trainPs = []
@@ -253,7 +249,8 @@ class BackendExample:
     def euclideanDistance(self, instance1, instance2, length):
         distance = 0
         for x in range(length):  # x+1 because first element is location
-            distance += pow((instance1[x] - instance2[x + 1]), 2)  # check all distances
+	    if instance1[x]!=0:
+            	distance += pow((instance1[x] - instance2[x + 1]), 2)  # check all distances
         return math.sqrt(distance)
 
     def getNeighbors(self, trainingSet, testInstance, k):
@@ -274,24 +271,32 @@ class BackendExample:
             del distances[todelete[x]]
         neighbors = []
         for x in range(k):
-            neighbors.append(distances[x][0])  # put the first k distances in neighbors
+	    temp = [distances[x][0][0], distances[x][0][1], distances[x][0][2], distances[x][0][3], distances[x][0][4], distances[x][1]]
+	    print(temp)
+            neighbors.append(temp)  # put the first k distances in neighbors
         return neighbors
 
     def calculateLocation(self, neighbors):
         global locations
         neighLocs = []
+	sumDist = 0
+	percentage = []
+	for x in range(len(neighbors)):
+	    sumDist += neighbors[x][5]
+	    percentage.append(neighbors[x][5])
+	percentage = [(1-x/sumDist) for x in percentage]
+	sumDist = sum(percentage)
+	percentage = [x/sumDist for x in percentage]
         for x in range(len(neighbors)):
             for location in locations:
                 if neighbors[x][0] == location[0]:
                     neighLocs.append(location)
-		sumx = 0
+	sumx = 0
         sumy = 0
-        for neighLoc in neighLocs:
-            sumx += neighLoc[1]
-            sumy += neighLoc[2]
-        meanX = sumx / len(neighLocs)
-        meanY = sumy / len(neighLocs)
-        location = (meanX, meanY)
+        for x in range(len(neighLocs)):
+            sumx += neighLocs[x][1]*percentage[x]
+            sumy += neighLocs[x][2]*percentage[x]
+        location = (sumx, sumy)
         return location
 
 
@@ -308,6 +313,14 @@ trainPs = BackendExample().loadDataset('database.txt')
 locations = BackendExample().loadLocations('locations.txt')
 
 '''
+# example
+neigh = BackendExample().getNeighbors(trainPs, [45, 62, 70, 70], 2)
+location = BackendExample().calculateLocation(neigh)
+print(str(location))
+'''
+
+
+'''
 client = mqtt.Client(protocol=mqtt.MQTTv31)
 client.on_connect = BackendExample().on_connect
 client.on_message = BackendExample().on_message
@@ -319,3 +332,6 @@ client.loop_forever()
 
 if __name__ == "__main__":
     BackendExample().run()
+
+
+
