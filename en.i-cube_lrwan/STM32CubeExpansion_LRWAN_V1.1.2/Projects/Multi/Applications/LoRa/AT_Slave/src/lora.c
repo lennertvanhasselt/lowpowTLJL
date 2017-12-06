@@ -747,7 +747,7 @@ void lora_Init (LoRaMainCallback_t *callbacks, LoRaParam_t* LoRaParam )
 {
   /* init the DeviceState*/
   DeviceState= DEVICE_STATE_INIT;
-  
+
   /* init the Tx Duty Cycle*/
   LoRaParamInit = LoRaParam;
   
@@ -786,6 +786,7 @@ void lora_fsm( void)
   {
     case DEVICE_STATE_INIT:
     {
+
         LoRaMacPrimitives.MacMcpsConfirm = McpsConfirm;
         LoRaMacPrimitives.MacMcpsIndication = McpsIndication;
         LoRaMacPrimitives.MacMlmeConfirm = MlmeConfirm;

@@ -166,6 +166,15 @@ ATEerror_t at_DevEUI_get(const char *param);
  * @param  Param string of the AT command
  * @retval AT_OK if OK, or an appropriate AT_xxx error code
  */
+
+ATEerror_t at_DevEUI_set(const char *param);
+
+/**
+ * @brief  Set Device EUI
+ * @param  Param string of the AT command
+ * @retval AT_OK if OK, or an appropriate AT_xxx error code
+ */
+
 ATEerror_t at_AppEUI_get(const char *param);
 
 /**

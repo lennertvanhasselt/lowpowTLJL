@@ -117,13 +117,13 @@ extern "C" {
  *         a pseudo random generator seeded with a value derived from
  *         BoardUniqueId value
  */
-#define STATIC_DEVICE_ADDRESS
+#define STATIC_DEVICE_ADDRESS                     1
 /**
  * Device address on the network (big endian)
  *
  * \remark see STATIC_DEVICE_ADDRESS comments
  */
-#define LORAWAN_DEVICE_ADDRESS                      ( uint32_t )0x006FDC4Da
+#define LORAWAN_DEVICE_ADDRESS                      ( uint32_t )0x0100000a
 
 /**
  * AES encryption/decryption cipher network session key
