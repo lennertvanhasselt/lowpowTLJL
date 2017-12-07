@@ -1,0 +1,62 @@
+15:53:07 **** Incremental Build of configuration Debug for project CompassHAL ****
+make all 
+Building file: ../Src/main.c
+Invoking: MCU GCC Compiler
+%cd%
+arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -mfloat-abi=soft '-D__weak=__attribute__((weak))' '-D__packed=__attribute__((__packed__))' -DUSE_HAL_DRIVER -DSTM32L152xE -I"C:/Master/IoT/Practicum/ProjectGit/lowpowTLJL/eCompass/CompassHAL/Inc" -I"C:/Master/IoT/Practicum/ProjectGit/lowpowTLJL/eCompass/CompassHAL/Drivers/STM32L1xx_HAL_Driver/Inc" -I"C:/Master/IoT/Practicum/ProjectGit/lowpowTLJL/eCompass/CompassHAL/Drivers/STM32L1xx_HAL_Driver/Inc/Legacy" -I"C:/Master/IoT/Practicum/ProjectGit/lowpowTLJL/eCompass/CompassHAL/Drivers/CMSIS/Device/ST/STM32L1xx/Include" -I"C:/Master/IoT/Practicum/ProjectGit/lowpowTLJL/eCompass/CompassHAL/Drivers/CMSIS/Include"  -Og -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"Src/main.d" -MT"Src/main.o" -o "Src/main.o" "../Src/main.c"
+../Src/main.c: In function 'get_axes':
+../Src/main.c:151:9: warning: return makes pointer from integer without a cast [-Wint-conversion]
+  return *mag_temp;
+         ^
+../Src/main.c: In function 'calibration':
+../Src/main.c:159:14: warning: assignment makes integer from pointer without a cast [-Wint-conversion]
+     *mag_temp=get_axes(mag_temp);
+              ^
+../Src/main.c: In function 'main':
+../Src/main.c:222:57: warning: cast to pointer from integer of different size [-Wint-to-pointer-cast]
+   HAL_I2C_Mem_Write(&hi2c1,magAddress,0x60,sizeof(0x60),(uint8_t*)CFG_REG_A_M_Data,sizeof(CFG_REG_A_M_Data),0xFFFFFFFF);
+                                                         ^
+../Src/main.c:189:8: warning: unused variable 'temp' [-Wunused-variable]
+  float temp[3] = {}, hardCor[3] = {};
+        ^
+../Src/main.c:188:29: warning: unused variable 'godr' [-Wunused-variable]
+  float yaw_rad=0, degree=0, godr=0;
+                             ^
+../Src/main.c:188:19: warning: unused variable 'degree' [-Wunused-variable]
+  float yaw_rad=0, degree=0, godr=0;
+                   ^
+../Src/main.c:188:8: warning: unused variable 'yaw_rad' [-Wunused-variable]
+  float yaw_rad=0, degree=0, godr=0;
+        ^
+../Src/main.c:187:37: warning: unused variable 'pitch_rad' [-Wunused-variable]
+  float roll=0, pitch=0, roll_rad=0, pitch_rad=0;
+                                     ^
+../Src/main.c:187:25: warning: unused variable 'roll_rad' [-Wunused-variable]
+  float roll=0, pitch=0, roll_rad=0, pitch_rad=0;
+                         ^
+../Src/main.c:187:16: warning: unused variable 'pitch' [-Wunused-variable]
+  float roll=0, pitch=0, roll_rad=0, pitch_rad=0;
+                ^
+../Src/main.c:187:8: warning: unused variable 'roll' [-Wunused-variable]
+  float roll=0, pitch=0, roll_rad=0, pitch_rad=0;
+        ^
+../Src/main.c:184:10: warning: unused variable 'Aaxes' [-Wunused-variable]
+  int32_t Aaxes[3];
+          ^
+../Src/main.c:183:10: warning: unused variable 'id' [-Wunused-variable]
+  uint8_t id;
+          ^
+Finished building: ../Src/main.c
+ 
+Building target: CompassHAL.elf
+Invoking: MCU GCC Linker
+arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -mfloat-abi=soft -specs=nosys.specs -specs=nano.specs -T"../STM32L152RETx_FLASH.ld" -Wl,-Map=output.map -Wl,--gc-sections -lm -o "CompassHAL.elf" @"objects.list"  
+Finished building target: CompassHAL.elf
+ 
+make --no-print-directory post-build
+Generating binary and Printing size information:
+arm-none-eabi-objcopy -O binary "CompassHAL.elf" "CompassHAL.bin"
+arm-none-eabi-size "CompassHAL.elf"
+   text	   data	    bss	    dec	    hex	filename
+  15504	     12	   1772	  17288	   4388	CompassHAL.elf
+ 

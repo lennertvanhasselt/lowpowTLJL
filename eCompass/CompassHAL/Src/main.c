@@ -52,7 +52,7 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 #define accAddress (0x19 << 1)
-//#define magAddress (0x3C << 1)//(0x1E << 1)
+//#define magAddress (0x3C)//(0x1E << 1)
 //#define OUTX_L 0x68
 //#define OUTX_H 0x69
 #define OUTY_L 0x6A
@@ -79,6 +79,47 @@ static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
+uint8_t read_from_mag(uint16_t addr)
+{
+	uint8_t buffer[] = {addr};
+	uint8_t value;
+	uint8_t magAddress = (0x19 << 1);
+
+	while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY || HAL_I2C_IsDeviceReady(&hi2c1, magAddress, 3, 100) != HAL_OK)
+	{	HAL_UART_Transmit(&huart2,(uint8_t*)"\r\nNot Ready",sizeof("\r\nNot Ready"),HAL_MAX_DELAY);
+	}
+	while (HAL_I2C_Master_Transmit(&hi2c1,                // i2c handle
+								  magAddress,    		  // i2c address, left aligned
+	                              (uint8_t *)&buffer,     // data to send
+	                              2,                      // how many bytes - 16 bit register address = 2 bytes
+	                              100)                    // timeout
+	                              	  != HAL_OK)          // result code
+	{
+		if (HAL_I2C_GetError(&hi2c1) != HAL_I2C_ERROR_AF)
+		{
+			Error_Handler();
+		}
+	}
+	while (HAL_I2C_IsDeviceReady(&hi2c1, magAddress, 3, 100) != HAL_OK) {
+		HAL_UART_Transmit(&huart2,(uint8_t*)"\r\nNot Ready3",sizeof("\r\nNot Ready3"),HAL_MAX_DELAY);
+	}
+	while (HAL_I2C_Master_Receive(&hi2c1,            	// i2c handle
+								 magAddress,    		// i2c address, left aligned
+								 (uint8_t *)&value,   	// pointer to address of where to store received data
+								 1,                   	// expecting one byte to be returned
+								 100)                	// timeout
+								 	 != HAL_OK)       	// result code
+	{
+		HAL_UART_Transmit(&huart2,(uint8_t*)"\r\nNot Ready",sizeof("\r\nNot Ready"),HAL_MAX_DELAY);
+		if (HAL_I2C_GetError (&hi2c1) != HAL_I2C_ERROR_AF)
+		{
+			Error_Handler();
+		}
+	}
+	return value;
+}
+
+
 int32_t * get_axes(int32_t mag_temp[]){
 	uint8_t XL=0, XH=0;
 	uint8_t YL=0, YH=0;
@@ -91,8 +132,10 @@ int32_t * get_axes(int32_t mag_temp[]){
 	if(HAL_I2C_IsDeviceReady(&hi2c1, magAddress, 5, HAL_MAX_DELAY) == HAL_OK){
 		HAL_UART_Transmit(&huart2,(uint8_t*)"Ready",sizeof("Ready"),HAL_MAX_DELAY);
 	}
-	HAL_I2C_Mem_Read(&hi2c1, magAddress, OUTX_L, I2C_MEMADD_SIZE_8BIT,&XL,sizeof(XL),HAL_MAX_DELAY);
-	HAL_I2C_Mem_Read(&hi2c1, magAddress, OUTX_H, I2C_MEMADD_SIZE_8BIT,&XH,sizeof(XH),HAL_MAX_DELAY);
+	XL=read_from_mag(OUTX_L);
+	XH=read_from_mag(OUTX_H);
+	//HAL_I2C_Mem_Read(&hi2c1, magAddress, OUTX_L, I2C_MEMADD_SIZE_8BIT,&XL,sizeof(XL),HAL_MAX_DELAY);
+	//HAL_I2C_Mem_Read(&hi2c1, magAddress, OUTX_H, I2C_MEMADD_SIZE_8BIT,&XH,sizeof(XH),HAL_MAX_DELAY);
 	HAL_I2C_Mem_Read(&hi2c1, magAddress, OUTY_L, I2C_MEMADD_SIZE_8BIT,&YL,sizeof(YL),HAL_MAX_DELAY);
 	HAL_I2C_Mem_Read(&hi2c1, magAddress, OUTY_H, I2C_MEMADD_SIZE_8BIT,&YH,sizeof(YH),HAL_MAX_DELAY);
 	HAL_I2C_Mem_Read(&hi2c1, magAddress, OUTZ_L, I2C_MEMADD_SIZE_8BIT,&ZL,sizeof(ZL),HAL_MAX_DELAY);
