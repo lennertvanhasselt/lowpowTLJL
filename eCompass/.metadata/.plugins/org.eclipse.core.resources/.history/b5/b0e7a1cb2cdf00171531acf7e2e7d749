@@ -52,7 +52,7 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 #define accAddress (0x19 << 1)
-//#define magAddress (0x3C)  //(0x1E << 1)
+#define magAddress 0x3C
 //#define OUTX_L 0x68
 //#define OUTX_H 0x69
 #define OUTY_L 0x6A
@@ -130,12 +130,12 @@ int32_t * get_axes(int32_t mag_temp[]){
 	// OUTX_H, OUTY_L, OUTY_H, OUTZ_L, OUTZ_H;
 
 	if(HAL_I2C_IsDeviceReady(&hi2c1, magAddress, 5, HAL_MAX_DELAY) == HAL_OK){
-		HAL_UART_Transmit(&huart2,(uint8_t*)"Ready: ",sizeof("Ready: "),HAL_MAX_DELAY);
+		HAL_UART_Transmit(&huart2,(uint8_t*)"Ready",sizeof("Ready"),HAL_MAX_DELAY);
 	}
-	//XL=read_from_mag(OUTX_L);
-	//XH=read_from_mag(OUTX_H);
-	HAL_I2C_Mem_Read(&hi2c1, magAddress, OUTX_L, I2C_MEMADD_SIZE_8BIT,&XL,sizeof(XL),HAL_MAX_DELAY);
-	HAL_I2C_Mem_Read(&hi2c1, magAddress, OUTX_H, I2C_MEMADD_SIZE_8BIT,&XH,sizeof(XH),HAL_MAX_DELAY);
+	XL=read_from_mag(OUTX_L);
+	XH=read_from_mag(OUTX_H);
+	//HAL_I2C_Mem_Read(&hi2c1, magAddress, OUTX_L, I2C_MEMADD_SIZE_8BIT,&XL,sizeof(XL),HAL_MAX_DELAY);
+	//HAL_I2C_Mem_Read(&hi2c1, magAddress, OUTX_H, I2C_MEMADD_SIZE_8BIT,&XH,sizeof(XH),HAL_MAX_DELAY);
 	HAL_I2C_Mem_Read(&hi2c1, magAddress, OUTY_L, I2C_MEMADD_SIZE_8BIT,&YL,sizeof(YL),HAL_MAX_DELAY);
 	HAL_I2C_Mem_Read(&hi2c1, magAddress, OUTY_H, I2C_MEMADD_SIZE_8BIT,&YH,sizeof(YH),HAL_MAX_DELAY);
 	HAL_I2C_Mem_Read(&hi2c1, magAddress, OUTZ_L, I2C_MEMADD_SIZE_8BIT,&ZL,sizeof(ZL),HAL_MAX_DELAY);
@@ -143,7 +143,7 @@ int32_t * get_axes(int32_t mag_temp[]){
 
 	HAL_UART_Transmit(&huart2,&XL,sizeof(XH),HAL_MAX_DELAY);
 	HAL_UART_Transmit(&huart2,&XL,sizeof(XL),HAL_MAX_DELAY);
-	HAL_UART_Transmit(&huart2,(uint8_t*)" end \n\r",sizeof(" end \n\r"),HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart2,(uint8_t*)"\n\r",sizeof("\n\r"),HAL_MAX_DELAY);
 
 	mag_temp[1] = (int32_t)(((XH << 8) | (XL & 0xff))*1.5);
 	mag_temp[2] = (int32_t)(((YH << 8) | (YL & 0xff))*1.5);
@@ -181,7 +181,6 @@ void calibration(int32_t Maxes[3], float *hardCor){
 void initMag(void)
 {
 	uint8_t CFG_REG_A_M_Data;
-	uint8_t magAddress = 0x3C;
 	//Enable DRDY
 	CFG_REG_A_M_Data=0x00;
 	//CFG_REG_A_M_Data &= ~0x03; CFG_REG_A_M_Data |= 0x01;
