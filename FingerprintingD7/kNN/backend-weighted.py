@@ -68,31 +68,42 @@ class BackendExample:
           self.config.broker,
         ))
 
-    def on_mqtt_connect(self, client, config, flags, rc):							# Connect to MQTT broker and subscribe 
-        # self.mq.subscribe("/tb")													# to the localisation topic
+    def on_mqtt_connect(self, client, config, flags, rc):
+        # self.mq.subscribe("/tb")
 	self.mq.subscribe("/localisation/#")
         self.connected_to_mqtt = True
 
-    def on_mqtt_message(self, client, config, msg):									# If a message is received, get the
-	global previoustime, matrix, reset, trainPs, k, location						# address of node and gateway,
-	# print(msg.topic+" "+str(msg.payload))											# RSSI and timestamp.
+    def on_mqtt_message(self, client, config, msg):
+	global previoustime, matrix, reset, trainPs, k, location, alarmcounter
+	# print(msg.topic+" "+str(msg.payload))
 	k=int(self.config.k)
 	data = json.loads(str(msg.payload))
-	if data['node'] == '43373134003e0041':											# When node sends a message:
+	if data['node'] == '43373134003e0041':
         	entry = (data['gateway'], data['link_budget'], data['timestamp'])
-        	actualtime=float(data['timestamp'][-8:])								# Wait for 4 messages of different 
-        	if previoustime > 8 and actualtime < 2 or previoustime < actualtime-1:  # gateways within a time window
-            		reset = True													# @TODO @Liam: Waarom 1/2/8 s?
+        	actualtime=float(data['timestamp'][-8:])
+        	if previoustime > 8 and actualtime < 2 or previoustime < actualtime-1:
+            		reset = True
             		previoustime = actualtime
 
         	if reset:
+			counter = 0
             		for idx, element in enumerate(matrix):
                 		if element == 0:
-                    			matrix[idx] = 99
-            		neighbors = self.getNeighbors(trainPs, matrix, k)
-            		location = self.calculateLocation(neighbors)
-            		print(str(location))
-            		print('Distance: ' + repr(neighbors))
+                    			matrix[idx] = 0
+					counter += 1
+            		if counter < 2:
+				neighbors = self.getNeighbors(trainPs, matrix, k)
+        	    		location = self.calculateLocation(neighbors)
+            		alarm = False
+			if(location[0] > 1017):
+				alarmcounter += 1
+				if alarmcounter > 1:
+					alarm = True
+			else:
+				alarmcounter = 0
+			print("\r\n alarm is "+alarm)
+			print(str(location))
+            		#  print('Distance: ' + repr(neighbors))
 
             		reset = False
             		matrix = [0, 0, 0, 0]
@@ -109,8 +120,8 @@ class BackendExample:
         	else:
             		print ("gateway not found   " + gateway[0:5])         
         
-	'''
- 	global location
+	
+ 	# global location
 	# msg contains already parsed command in ALP in JSON
         print("ALP Command received from TB: {}".format(msg.payload))
         try:
@@ -132,7 +143,7 @@ class BackendExample:
           if type(action.operation) is ReturnFileData and action.operand.offset.id == 64:
             my_sensor_value = struct.unpack("L", bytearray(action.operand.data))[0] # parse binary payload (adapt to your needs)
             print("node {} sensor value {}".format(node_id, my_sensor_value))
-        '''
+        
         
 	# save the parsed sensor data as an attribute to the device, using the TB API
         try:
@@ -149,7 +160,7 @@ class BackendExample:
           # finally, store the sensor attribute on the node in TB
           response = self.device_api_controller_api.post_telemetry_using_post(
             device_token=device_access_token,
-            json={"X":location[0],"Y":location[1]}  # Send X and Y coordinates of the node via MQTT in JSON format
+            json={"X":location[0],"Y":location[1],"my_sensor_value":my_sensor_value}
           )
 	  # print(str(location[0])+"   "+str(location[1]))
           print("Updated my_sensor attribute for node {}".format(node_id))
@@ -225,10 +236,10 @@ class BackendExample:
                 # sizeMatrix = len(matrix)
     '''
 
-    def loadDataset(self, filename):  											# Read database with training points  
-        f = open(filename, 'r')													# and format the data to comma-separated values
+    def loadDataset(self, filename):
+        f = open(filename, 'r')
         trainPs = []
-        for line in f:  														# delete '(' and ')\n'. Split on ', '.
+        for line in f:  # delete '(' and ')\n'. Split on ', '.
             # trainP = [int(x) for x in line.lstrip('(').rstrip(')\n').split(',')]
             trainP = [int(x) for x in line.rstrip('\n').split(',')]
             trainPs.append(trainP)
@@ -237,24 +248,24 @@ class BackendExample:
         f.close()
         return trainPs
 
-    def loadLocations(self, filename):											# Read file with locations of the map (image).
-        f = open(filename, 'r')													# Locations are represented using pixels as 
-        locations = []															# coordinates.
+    def loadLocations(self, filename):
+        f = open(filename, 'r')
+        locations = []
         for line in f:
             location = [int(x) for x in line.rstrip('\n').split(',')]
             locations.append(location)
         f.close()
         return locations
 
-    def euclideanDistance(self, instance1, instance2, length):					# Calculate the Euclidean distance between
-        distance = 0															# a measurement and an entry in the database.
+    def euclideanDistance(self, instance1, instance2, length):
+        distance = 0
         for x in range(length):  # x+1 because first element is location
 	    if instance1[x]!=0:
             	distance += pow((instance1[x] - instance2[x + 1]), 2)  # check all distances
         return math.sqrt(distance)
 
-    def getNeighbors(self, trainingSet, testInstance, k):						# Pattern matching: Get the k nearest neighbors
-        distances = []															# as output of the kNN algorithm
+    def getNeighbors(self, trainingSet, testInstance, k):
+        distances = []
         length = len(testInstance) - 1  # amount of values in Instance
         for x in range(len(trainingSet)):  # test for every trainingspoint
             dist = self.euclideanDistance(testInstance, trainingSet[x], length)
@@ -276,13 +287,13 @@ class BackendExample:
             neighbors.append(temp)  # put the first k distances in neighbors
         return neighbors
 
-    def calculateLocation(self, neighbors):				# Calculate the location of the node using the 
-        global locations								# k distances (via RSSI) to the k nearest 
-        neighLocs = []									# Access Points.
-	sumDist = 0											# Use a weighted function:
-	percentage = []										# The higher the RSSI, the closer the node to
-	for x in range(len(neighbors)):						# that AP, so the higher the weight (percentage)
-	    sumDist += neighbors[x][5]						
+    def calculateLocation(self, neighbors):
+        global locations
+        neighLocs = []
+	sumDist = 0
+	percentage = []
+	for x in range(len(neighbors)):
+	    sumDist += neighbors[x][5]
 	    percentage.append(neighbors[x][5])
 	percentage = [(1-x/sumDist) for x in percentage]
 	sumDist = sum(percentage)
@@ -303,6 +314,7 @@ class BackendExample:
 # kNN Source used: https://machinelearningmastery.com/tutorial-to-implement-k-nearest-neighbors-in-python-from-scratch/
 
 k = 2
+alarmcounter = 0
 
 location = [5,5]
 matrix = [0, 0, 0, 0]

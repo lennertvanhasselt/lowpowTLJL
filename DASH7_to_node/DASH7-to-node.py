@@ -74,10 +74,10 @@ class GatewayCommandExample:
         cmd = Command.create_with_return_file_data_action(file_id=40, data=[0x43, 0x43, 0x43], interface_type=InterfaceType.D7ASP, interface_configuration=D7config(qos=QoS(resp_mod=ResponseMode.RESP_MODE_NO),addressee=Addressee(access_class=0x11, id_type=IdType.NOID)))
         #json_alp_cmd = [0x41, 0x54, 0x24, 0x44, 0xc0, 0x00, 0x12, 0x32, 0xd7, 0x01, 0x00, 0x10, 0x01, 0x20, 0x01, 0x00, 0x04, 0x74, 0x65, 0x73, 0x74]
         self.execute_rpc_command(self.config.device, cmd)
-        sleep(5)
-        self.execute_rpc_command(self.config.device, cmd)
+	sleep(5)
+	self.execute_rpc_command(self.config.device, cmd)
 
 
 if __name__ == "__main__":
-    GatewayCommandExample().run()
+  GatewayCommandExample().run()
 
