@@ -42,11 +42,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#define LENGTH_ARRAY(x)  (sizeof(x) / sizeof(uint8_t))
-#define FRAME_LENGTH 7
-#define SERIAL 7
-#define BUFSIZE 200
-
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
 UART_HandleTypeDef huart1;
@@ -78,36 +73,25 @@ int main(void)
   MX_USART3_UART_Init();
   MX_I2C1_Init();
 
-  char buffer[128];
-  char sendbuffer[27];
+
+  char buffer[128], sendbuffer[27], latitude[9], buflatitude[9], longitude[9], buflongitude[9], ns[1], ew[1], lock[1], hdop[3];
   uint8_t character[1];
-  char latitude[9];
-  char buflatitude[9];
-  char longitude[9];
-  char buflongitude[9];
-  char ns[1];
-  char ew[1];
-  char lock[1];
-  char hdop[3];
+  int j = 0, i = 0, k = 0, internalCount = 0, commaCount = 0;
 
-  int j = 0;
-  int i = 0;
-  int k = 0;
-  int internalCount = 0;
-  int commaCount = 0;
-
+  /* Initialize GPS to send specific data on specific date in time. */
   initGPS();
+
   /* Infinite loop */
   while (1)
   {
-	  //when there is a uart interrupt check the character and put it in the buffer.
-	  //If the character is the end delemiter the NMEA command is complete.
+	  /* After receiving UART interrupt check the character and put it in the buffer.
+	  	 If the character is the end of a line the NMEA command is complete.*/
 	  if (HAL_UART_Receive_IT(&huart1, character, 1) == HAL_OK) {
 		  buffer[i - 1] = *character;
 		  if (*character == '\n') {
 			  commaCount = 0;
 			  internalCount=0;
-			  //Counting Comma's to determine which part we want to save
+			  /* Counting Comma's to determine which part we want to save. */
 			  for(j=0 ; commaCount < 9 ; j++) {
 				  if(buffer[j] == 0x2c) {
 					  commaCount++;
@@ -145,20 +129,21 @@ int main(void)
 				  	  	  	  }
 				  }
 			  }
+			  /* Only update the location when the receive values is different form the previous one and if the GPS has a lock.*/
 			  if((((strcmp(buflatitude,latitude))!=0) || ((strcmp(buflongitude,longitude))!=0)) && (lock[0]=='1')){
-				 // HAL_UART_Transmit(&huart2, (uint8_t*)"Move that device like a pretzel! \n\r",sizeof("Move that device like a pretzel! \n\r"), HAL_MAX_DELAY);
 				  for(j=0 ; j < 9 ; j++) {
 					  buflatitude[j] = latitude[j];
 				  }
 				  for(j=0 ; j < 9 ; j++) {
 					  buflongitude[j] = longitude[j];
 				  }
+				  /* Merge desired fields in 1 array. */
 				  for(j=0 ; j<27 ; j++) {
-					  if(j==9 || j==11 || j==21 || j==23){
-							sendbuffer[j]= 0x2c;
+				  	  if(j==9 || j==11 || j==21 || j==23){
+					  	  sendbuffer[j]= 0x2c;
 					  }
 					  else if(j<9){
-						  sendbuffer[j]=latitude[j];
+					  	  sendbuffer[j]=latitude[j];
 					  }
 					  else if(j<11){
 						  sendbuffer[j]=ns[0];
@@ -188,9 +173,9 @@ int main(void)
 
 void initGPS()
 {
-	uint8_t setGPGGA[] = {0x24, 0x50, 0x53, 0x52, 0x46, 0x31, 0x30, 0x33, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x30, 0x2c, 0x36, 0x30, 0x2c, 0x30, 0x31, 0x2a, 0x32, 0x35, 0x2a, 0x30, 0x46};	//Set GPGGA to update every 60s
-	//uint8_t setGPGGA[] = {0x24, 0x50, 0x53, 0x52, 0x46, 0x31, 0x30, 0x33, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x30, 0x2c, 0x31, 0x30, 0x2c, 0x30, 0x31, 0x2a, 0x32, 0x35, 0x0d, 0x0a}; //Set GPGGA to update every 10s
-	HAL_UART_Transmit(&huart1, setGPGGA, 25, HAL_MAX_DELAY);
+	//uint8_t setGPGGA[] = {0x24, 0x50, 0x53, 0x52, 0x46, 0x31, 0x30, 0x33, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x30, 0x2c, 0x36, 0x30, 0x2c, 0x30, 0x31, 0x2a, 0x32, 0x32, 0x0d, 0x0a };	//Set GPGGA to update every 60s
+	uint8_t setGPGGA[] = {0x24, 0x50, 0x53, 0x52, 0x46, 0x31, 0x30, 0x33, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x30, 0x2c, 0x31, 0x30, 0x2c, 0x30, 0x31, 0x2a, 0x32, 0x35, 0x0d, 0x0a}; //Set GPGGA to update every 10s
+	HAL_UART_Transmit(&huart1, setGPGGA, 28, HAL_MAX_DELAY);
 	uint8_t setGPGSA[] = {0x24, 0x50, 0x53, 0x52, 0x46, 0x31, 0x30, 0x33, 0x2c, 0x30, 0x32, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x31, 0x2a, 0x32, 0x36, 0x0d, 0x0a}; //Disable
 	HAL_UART_Transmit(&huart1, setGPGSA, 25, HAL_MAX_DELAY);
 	uint8_t setGPGSV[] = {0x24, 0x50, 0x53, 0x52, 0x46, 0x31, 0x30, 0x33, 0x2c, 0x30, 0x33, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x31, 0x2a, 0x32, 0x37, 0x0d, 0x0a}; //Disable
