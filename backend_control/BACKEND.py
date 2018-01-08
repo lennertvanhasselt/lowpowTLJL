@@ -1,3 +1,21 @@
+""" BACKEND.py
+ This script is the main script being executed on the backend, an Ubuntu server.
+ The backend controls when GPS and compass need to be enabled or disabled.
+ It serves as an interface for DASH7 and LoRaWAN. 
+ 
+ DASH7 communication: 
+	- Receive RSSI from 4 different gateways via MQTT
+	- (A fingerprinting database is constructed using 30 training points)
+	- Calculate position of node using kNN
+	- Send position (X,Y) to ThingsBoard (TB)
+	- Check if GPS needs to be enabled
+	
+LoRaWAN communication:
+	- Receive GPS coordinates
+	- Send location (lat,long) to Thingsboard
+	- Check if DASH7 needs to be enabled
+"""
+
 # !/usr/bin/env python
 
 from __future__ import print_function

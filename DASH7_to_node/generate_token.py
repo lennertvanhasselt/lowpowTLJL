@@ -1,3 +1,10 @@
+"""
+generate_token.py
+
+Execute this script to generate a new token if the previous one is expired.
+Copy the token!
+"""
+
 import requests
 import json
 import jsonpickle

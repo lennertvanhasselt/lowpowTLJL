@@ -1,3 +1,21 @@
+"""
+DASH7localization.py
+This script is used to generate a DASH7 fingerprinting database.
+
+30 training points were used, spread over the the test location.
+Perform 6 measurements at every location to avoid outliers.
+Save RSSI values of every gateway (GW) at each location.
+Write the values to a .txt file (the database) in the following format:
+(<location number>, <RSSI 1>, <RSSI 2>, <RSSI 3>, <RSSI 4>);
+
+How to perform measurements?
+	1. Run this script
+	2. Input the training point number of your location.
+	3. Don't move until you hear a beeping sound!
+	4. The measurement is now saved into the fingerprinting database.
+
+"""
+
 import json
 import paho.mqtt.client as mqtt
 import winsound
