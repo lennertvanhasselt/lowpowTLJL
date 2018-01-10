@@ -105,8 +105,9 @@ class Backend:
             print("Payload is valid JSON")
         except:
             return
-        print(data['alp']['interface_status']['operation']['operand']['interface_status']['addressee']['id'])
+        #print(data['alp']['interface_status']['operation']['operand']['interface_status']['addressee']['id'])
         if data['alp']['interface_status']['operation']['operand']['interface_status']['addressee']['id'] == 4771339728167632949:
+            direction = data['alp']['actions'][0]['operation']['operand']['data'][0]
             actualtime=time.time()
             entry = (data['deviceId'], data['alp']['interface_status']['operation']['operand']['interface_status']['link_budget'], actualtime)
             # actualtime=float(data['timestamp'][-8:])
@@ -121,7 +122,7 @@ class Backend:
                         counter += 1
                 if counter < 2:
                     neighbors = self.getNeighbors(trainPs, matrix, k)
-                    location = self.calculateLocation(neighbors)
+                    location = self.calculateLocation(neighbors,direction)
                 alarm = False
                 if location[0] > 1017:
                     alarmcounter += 1
@@ -162,7 +163,7 @@ class Backend:
                 # finally, store the sensor attribute on the node in TB
                 response = self.device_api_controller_api.post_telemetry_using_post(
                 device_token=device_access_token,
-                json={"X":location[0], "Y":location[1],"direction":data['alp']['actions'][0]['operation']['operand']['data'][0]}
+                json={"X":location[0], "Y":location[1],"direction":direction}
                 )
                 # print(str(location[0])+"   "+str(location[1]))
 
@@ -289,26 +290,52 @@ class Backend:
             neighbors.append(temp)  # put the first k distances in neighbors
         return neighbors
 
-    def calculateLocation(self, neighbors):
+    def calculateLocation(self, neighbors, direction):
         global locations
         neighLocs = []
         sumDist = 0
         percentage = []
         for x in range(len(neighbors)):
-            sumDist += neighbors[x][5]
-            percentage.append(neighbors[x][5])
-        percentage = [(1-x/sumDist) for x in percentage]
-        sumDist = sum(percentage)
-        percentage = [x/sumDist for x in percentage]
-        for x in range(len(neighbors)):
+            sumDist += neighbors[x][5]                      # SumDist is sum of all distances to the k nearest neighbors
+            percentage.append(neighbors[x][5])              # Array of all distances
+        # percentage = [(1-(x/sumDist)) for x in percentage]
+        # sumDist = sum(percentage)
+        percentage = [x/sumDist for x in percentage]        # For every distance: calculate percentage of total distance
+        for x in range(len(neighbors)):                     # Translate/map neighbours to locations (x,y)
             for location in locations:
                 if neighbors[x][0] == location[0]:
                     neighLocs.append(location)
         sumx = 0
         sumy = 0
-        for x in range(len(neighLocs)):
+        for x in range(len(neighLocs)):                     # Calculate weighted location
             sumx += neighLocs[x][1]*percentage[x]
             sumy += neighLocs[x][2]*percentage[x]
+        if direction == 0:                                  # Sensor fusion: Direction weighted localisation
+            sumx += 40 / math.cos(0.436332313)  # 25 degrees
+            sumy += 40 / math.sin(0.436332313)
+        elif direction == 1:
+            sumx += 40 / math.cos(1.22173048)   # 70 degrees
+            sumy += 40 / math.sin(1.22173048)
+        elif direction == 2:
+            sumx += 40 / math.cos(2.00712864)   # 115 degrees
+            sumy += 40 / math.sin(2.00712864)
+        elif direction == 3:
+            sumx += 40 / math.cos(2.7925268)    # 160 degrees
+            sumy += 40 / math.sin(2.7925268)
+        elif direction == 4:
+            sumx += 40 / math.cos(3.57792497)   # 205 degrees
+            sumy += 40 / math.sin(3.57792497)
+        elif direction == 5:
+            sumx += 40 / math.cos(4.36332313)   # 250 degrees
+            sumy += 40 / math.sin(4.36332313)
+        elif direction == 6:
+            sumx += 40 / math.cos(5.14872129)   # 295 degrees
+            sumy += 40 / math.sin(5.14872129)
+        elif direction == 7:
+            sumx += 40 / math.cos(5.93411946)   # 340 degrees
+            sumy += 40 / math.sin(5.93411946)
+        else:
+            print("location not valid\r\n")
         location = (sumx, sumy)
         return location
 
