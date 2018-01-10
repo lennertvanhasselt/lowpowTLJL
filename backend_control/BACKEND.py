@@ -42,6 +42,17 @@ from pprint import pprint
 from tb_api_client import swagger_client
 from tb_api_client.swagger_client import ApiClient, Configuration
 from tb_api_client.swagger_client.rest import ApiException
+from d7a.alp.command import Command
+from d7a.system_files.dll_config import DllConfigFile
+from d7a.alp.interface import InterfaceType
+from d7a.d7anp.addressee import Addressee, IdType
+from d7a.sp.configuration import Configuration as D7config
+from d7a.sp.qos import QoS, ResponseMode
+from d7a.system_files.uid import UidFile
+
+from tb_api_client import swagger_client
+from tb_api_client.swagger_client import ApiClient, Configuration
+from time import sleep
 
 
 class Backend:
@@ -64,10 +75,10 @@ class Backend:
         api_client_config.host = self.config.url
         api_client_config.api_key['X-Authorization'] = self.config.token
         api_client_config.api_key_prefix['X-Authorization'] = 'Bearer'
-        api_client = ApiClient(api_client_config)
+        self.api_client = ApiClient(api_client_config)
 
-        self.device_controller_api = swagger_client.DeviceControllerApi(api_client=api_client)
-        self.device_api_controller_api =swagger_client.DeviceApiControllerApi(api_client=api_client)
+        self.device_controller_api = swagger_client.DeviceControllerApi(api_client=self.api_client)
+        self.device_api_controller_api =swagger_client.DeviceApiControllerApi(api_client=self.api_client)
 
 
     def connect_to_mqtt(self):
@@ -124,13 +135,24 @@ class Backend:
                     neighbors = self.getNeighbors(trainPs, matrix, k)
                     location = self.calculateLocation(neighbors,direction)
                 alarm = False
-                if location[0] > 1017:
+                if location[0] > 1017:          # If patient is out of safe zone for a while, set alarm!
                     alarmcounter += 1
-                    if alarmcounter > 1:
+                    if alarmcounter >= 1:
                         alarm = True
                 else:
                     alarmcounter = 0
                 print("\r\n alarm is "+str(alarm))
+                if alarm:  # If patient is out of safe zone, send ALP command (data = 3) to node to enable GPS
+                    cmd = Command.create_with_return_file_data_action(file_id=40, data=[0x03],
+                                                                      interface_type=InterfaceType.D7ASP,
+                                                                      interface_configuration=D7config(
+                                                                          qos=QoS(resp_mod=ResponseMode.RESP_MODE_NO),
+                                                                          addressee=Addressee(access_class=0x11,
+                                                                                              id_type=IdType.NOID)))
+                    self.execute_rpc_command(entry[0], cmd)
+                    sleep(5)                                    # 2nd message is wrong message
+                    self.execute_rpc_command(entry[0], cmd)
+
                 print(str(location))
                 #  print('Distance: ' + repr(neighbors))
 
@@ -163,7 +185,7 @@ class Backend:
                 # finally, store the sensor attribute on the node in TB
                 response = self.device_api_controller_api.post_telemetry_using_post(
                 device_token=device_access_token,
-                json={"X":location[0], "Y":location[1],"direction":direction}
+                json={"X":location[0], "Y":location[1], "direction":direction}
                 )
                 # print(str(location[0])+"   "+str(location[1]))
 
@@ -182,7 +204,6 @@ class Backend:
         except:
             return
         if dataGPS['EUI'] == "BE7A000000001B96" and dataGPS['cmd'] == "rx":  # If our LoRaWAN device is sending a message, interpret the data
-            print("\nTEST")
             s = dataGPS['data']
             [latitude, ns, longitude, we, hdop] = s.decode('hex').split(',')
             latitude = float(latitude)
@@ -203,7 +224,7 @@ class Backend:
             # save the parsed sensor data as an attribute to the device, using the TB API
             try:
                 # first get the deviceId mapped to the device name
-                node_id = "4237343400240035" #"BE7A000000001B96"
+                node_id = "4237343400240035"  # "BE7A000000001B96"
                 response = self.device_controller_api.get_tenant_device_using_get(device_name=str(node_id))
                 device_id = response.id.id
 
@@ -338,6 +359,28 @@ class Backend:
             print("location not valid\r\n")
         location = (sumx, sumy)
         return location
+
+    def execute_rpc_command(self, device_id, json_alp_cmd):     # Send ALP command from backend to node through gateways
+        cmd = {"method": "execute-alp-async", "params": jsonpickle.encode(json_alp_cmd), "timeout": 500}
+        path_params = {'deviceId': device_id}
+        query_params = {}
+        header_params = {}
+        header_params['Accept'] = self.api_client.select_header_accept(['*/*'])
+        header_params['Content-Type'] = self.api_client.select_header_content_type(['application/json'])
+
+        # Authentication setting
+        auth_settings = ['X-Authorization']
+        return self.api_client.call_api('/api/plugins/rpc/oneway/{deviceId}', 'POST',
+                                        path_params,
+                                        query_params,
+                                        header_params,
+                                        body=cmd,
+                                        post_params=[],
+                                        files={},
+                                        response_type='DeferredResultResponseEntity',
+                                        auth_settings=auth_settings,
+                                        async=False)
+
 
  # kNN Source used: https://machinelearningmastery.com/tutorial-to-implement-k-nearest-neighbors-in-python-from-scratch/
 
