@@ -69,10 +69,12 @@ class Backend:
         self.device_controller_api = swagger_client.DeviceControllerApi(api_client=api_client)
         self.device_api_controller_api =swagger_client.DeviceApiControllerApi(api_client=api_client)
 
+
     def connect_to_mqtt(self):
         self.connected_to_mqtt = False
-
         self.mq = mqtt.Client("", True, None, mqtt.MQTTv31)
+        self.mq.message_callback_add('/tb', self.on_message_tb)            # Check if a DASH7 message is present
+        self.mq.message_callback_add('/loriot/#', self.on_message_loriot)  # Check if a LoRaWAN message is present
         self.mq.on_connect = self.on_mqtt_connect
         self.mq.on_message = self.on_mqtt_message
         if self.config.username!="none":
@@ -83,13 +85,17 @@ class Backend:
         while not self.connected_to_mqtt: pass  # busy wait until connected
         print("Connected to MQTT broker on {}".format(self.config.broker))
 
+
     def on_mqtt_connect(self, client, config, flags, rc):
-        self.mq.subscribe("/tb")
+        self.mq.subscribe("/#")
         # self.mq.subscribe("/loriot/#")
 
         self.connected_to_mqtt = True
 
     def on_mqtt_message(self, client, config, msg):
+        return
+
+    def on_message_tb(self, client, config, msg):
         global previoustime, matrix, reset, trainPs, k, location, alarmcounter
         # print(msg.topic+" "+str(msg.payload))
         k = int(self.config.k)
@@ -101,7 +107,6 @@ class Backend:
             return
         print(data['alp']['interface_status']['operation']['operand']['interface_status']['addressee']['id'])
         if data['alp']['interface_status']['operation']['operand']['interface_status']['addressee']['id'] == 4771339728167632949:
-            # entry = (data['gateway'], data['link_budget'], data['timestamp']) # TODO timestamp???
             actualtime=time.time()
             entry = (data['deviceId'], data['alp']['interface_status']['operation']['operand']['interface_status']['link_budget'], actualtime)
             # actualtime=float(data['timestamp'][-8:])
@@ -146,7 +151,6 @@ class Backend:
             # save the parsed sensor data as an attribute to the device, using the TB API
             try:
                 # first get the deviceId mapped to the device name
-                gateway = data['deviceId']
                 node_id = 4237343400240035
                 response = self.device_controller_api.get_tenant_device_using_get(device_name=str(node_id))
                 device_id = response.id.id
@@ -158,7 +162,7 @@ class Backend:
                 # finally, store the sensor attribute on the node in TB
                 response = self.device_api_controller_api.post_telemetry_using_post(
                 device_token=device_access_token,
-                json={"X":location[0], "Y":location[1],"direction":data['alp']['actions'][0]['operation']['operand']['data'][0]}  #, "latitude":latitude, "longitude":longitude, "HDOP":hdop}
+                json={"X":location[0], "Y":location[1],"direction":data['alp']['actions'][0]['operation']['operand']['data'][0]}
                 )
                 # print(str(location[0])+"   "+str(location[1]))
 
@@ -170,6 +174,49 @@ class Backend:
         else:
             print('\nElse')
 
+    def on_message_loriot(self, client, config, msg):   # s = "353131302e363538302c4e2c30303432342e3934312c452c312e31"
+        try:
+            dataGPS = jsonpickle.json.loads(msg.payload)
+            print("Payload is valid JSON")
+        except:
+            return
+        if dataGPS['EUI'] == "BE7A000000001B96" and dataGPS['cmd'] == "rx":  # If our LoRaWAN device is sending a message, interpret the data
+            print("\nTEST")
+            s = dataGPS['data']
+            [latitude, ns, longitude, we, hdop] = s.decode('hex').split(',')
+            latitude = float(latitude)
+            longitude = float(longitude)
+            hdop = float(hdop)
+            deg = math.floor(latitude / 100)    # Convert latitude and longitude to correct format
+            min = latitude - (deg * 100)        # 51.1234567 04.1234567
+            latitude = deg + (min / 60)
+            deg = math.floor(longitude / 100)
+            min = longitude - (deg * 100)
+            longitude = deg + (min / 60)
+            if ns == 'S':
+                latitude *= -1
+            if we == 'W':
+                longitude *= -1
+            print('Coordinate: {}{} {}{} (HDOP = {})'.format(ns, latitude, we, longitude, hdop))
+
+            # save the parsed sensor data as an attribute to the device, using the TB API
+            try:
+                # first get the deviceId mapped to the device name
+                node_id = "4237343400240035" #"BE7A000000001B96"
+                response = self.device_controller_api.get_tenant_device_using_get(device_name=str(node_id))
+                device_id = response.id.id
+
+                # next, get the access token of the device
+                response = self.device_controller_api.get_device_credentials_by_device_id_using_get(device_id=device_id)
+                device_access_token = response.credentials_id
+
+                # finally, store the sensor attribute on the node in TB
+                response = self.device_api_controller_api.post_telemetry_using_post(
+                    device_token=device_access_token,
+                json={"latitude":latitude, "longitude":longitude, "HDOP":hdop}
+                )
+            except ApiException as e:
+                print("Exception when calling API: %s\n" % e)
 
     def __del__(self):
         try:
@@ -267,6 +314,7 @@ class Backend:
 
  # kNN Source used: https://machinelearningmastery.com/tutorial-to-implement-k-nearest-neighbors-in-python-from-scratch/
 
+
 k = 2
 alarmcounter = 0
 
@@ -275,8 +323,10 @@ matrix = [0, 0, 0, 0]
 previoustime = 0.0
 reset = False
 
+
 trainPs = Backend().loadDataset('database.txt')
 locations = Backend().loadLocations('locations.txt')
+
 
 '''
 # example
@@ -295,60 +345,6 @@ client.username_pw_set("student", "cv1Dq6GXL9cqsStSHKp5")
 client.connect("backend.idlab.uantwerpen.be", 1883, 60)
 client.loop_forever()
 '''
-
-
-# class Read_GPS_coordinates:
-#     def __init__(self):                         # Init coordinates with unrealistic values
-#         global data, latitude, longitude, ns, we, hdop
-#         latitude = 91.0
-#         ns = 'N'
-#         longitude = 181.0
-#         we = 'E'
-#         hdop = 0
-#         data = [latitude, ns, longitude, we, hdop]
-#
-#     def reset_coordinate(self):
-#         global data, latitude, longitude, ns, we, hdop
-#         latitude = 91.0
-#         ns = 'N'
-#         longitude = 181.0
-#         we = 'E'
-#         hdop = 0
-#         data = [latitude, ns, longitude, we, hdop]
-#
-#     def read_coordinate(self, s):               # Read HEX string sent over LoRa and convert coordinate data
-#         global data, latitude, longitude, ns, we, hdop
-#         [latitude, ns, longitude, we, hdop] = s.decode('hex').split(',')
-#         latitude = float(latitude)
-#         longitude = float(longitude)
-#         hdop = float(hdop)
-#
-#         deg = math.floor(latitude/100)          # Convert latitude and longitude to correct format
-#         min = latitude - (deg*100)              # 51.1234567 04.1234567
-#         latitude = deg + (min/60)
-#         print(latitude)
-#         deg = math.floor(longitude / 100)
-#         min = longitude - (deg * 100)
-#         longitude = deg + (min / 60)
-#         print(longitude)
-#
-#         if ns == 'S':
-#             latitude *= -1
-#         if we == 'W':
-#             longitude *= -1
-#
-#     def print_coordinate(self):
-#         print('Coordinate: {}{} {}{} (HDOP = {})'.format(ns, latitude, we, longitude, hdop))
-#
-
-
-global data, latitude, ns, longitude, we, hdop
-# GPSread = Read_GPS_coordinates()
-# #while True:
-# s = "353131302e363538302c4e2c30303432342e3934312c452c312e31"
-# GPSread.reset_coordinate()
-# GPSread.read_coordinate(s)
-# GPSread.print_coordinate()
 
 if __name__ == "__main__":
     Backend().run()
