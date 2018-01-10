@@ -10,7 +10,7 @@
 	- Send position (X,Y) to ThingsBoard (TB)
 	- Check if GPS needs to be enabled
 	
-LoRaWAN communication:
+ LoRaWAN communication:
 	- Receive GPS coordinates
 	- Send location (lat,long) to Thingsboard
 	- Check if DASH7 needs to be enabled
@@ -92,10 +92,15 @@ class Backend:
     def on_mqtt_message(self, client, config, msg):
         global previoustime, matrix, reset, trainPs, k, location, alarmcounter
         # print(msg.topic+" "+str(msg.payload))
-        k=int(self.config.k)
-        data = json.loads(str(msg.payload))
-        if data['alp']['interface_status']['operation']['operand']['interface_status']['addressee']['id'] == '4771339728167632949':
-        # if data['node'] == '43373134003e0041':
+        k = int(self.config.k)
+
+        try:
+            data = jsonpickle.json.loads(msg.payload)
+            print("Payload is valid JSON")
+        except:
+            return
+        print(data['alp']['interface_status']['operation']['operand']['interface_status']['addressee']['id'])
+        if data['alp']['interface_status']['operation']['operand']['interface_status']['addressee']['id'] == 4771339728167632949:
             # entry = (data['gateway'], data['link_budget'], data['timestamp']) # TODO timestamp???
             actualtime=time.time()
             entry = (data['deviceId'], data['alp']['interface_status']['operation']['operand']['interface_status']['link_budget'], actualtime)
@@ -119,7 +124,7 @@ class Backend:
                         alarm = True
                 else:
                     alarmcounter = 0
-                print("\r\n alarm is "+alarm)
+                print("\r\n alarm is "+str(alarm))
                 print(str(location))
                 #  print('Distance: ' + repr(neighbors))
 
@@ -137,52 +142,34 @@ class Backend:
                 matrix[3] = entry[1]
             else:
                 print ("gateway not found   " + gateway[0:5])
-        '''
-            # global location
-            # msg contains already parsed command in ALP in JSON
-            print("ALP Command received from TB: {}".format(msg.payload))
+
+            # save the parsed sensor data as an attribute to the device, using the TB API
             try:
-                obj = jsonpickle.json.loads(msg.payload)
-            except:
-                print("Payload not valid JSON, skipping") # TODO issue with TB rule filter, to be fixed
-                return
-    
-            gateway = obj["deviceId"]
-            cmd = jsonpickle.decode(jsonpickle.json.dumps(obj["alp"]))
-            node_id = gateway  # overwritten below with remote node ID when received over D7 interface
-            # get remote node id (when this is received over D7 interface)
-            if cmd.interface_status != None and cmd.interface_status.operand.interface_id == 0xd7:
-                node_id = '{:x}'.format(cmd.interface_status.operand.interface_status.addressee.id)
-    
-            # look for returned file data which we can parse, in this example file 64
-            my_sensor_value = 0
-            for action in cmd.actions:
-                if type(action.operation) is ReturnFileData and action.operand.offset.id == 64:
-                    my_sensor_value = struct.unpack("L", bytearray(action.operand.data))[0] # parse binary payload (adapt to your needs)
-                    print("node {} sensor value {}".format(node_id, my_sensor_value))
-        '''
-        # save the parsed sensor data as an attribute to the device, using the TB API
-        try:
-            # first get the deviceId mapped to the device name
-            gateway = data['deviceId']
-            node_id = gateway
-            response = self.device_controller_api.get_tenant_device_using_get(device_name=str(node_id))
-            device_id = response.id.id
+                # first get the deviceId mapped to the device name
+                gateway = data['deviceId']
+                node_id = 4237343400240035
+                response = self.device_controller_api.get_tenant_device_using_get(device_name=str(node_id))
+                device_id = response.id.id
 
-            # next, get the access token of the device
-            response = self.device_controller_api.get_device_credentials_by_device_id_using_get(device_id=device_id)
-            device_access_token = response.credentials_id
+                # next, get the access token of the device
+                response = self.device_controller_api.get_device_credentials_by_device_id_using_get(device_id=device_id)
+                device_access_token = response.credentials_id
 
-            # finally, store the sensor attribute on the node in TB
-            response = self.device_api_controller_api.post_telemetry_using_post(
-            device_token=device_access_token,
-            json={"X":location[0], "Y":location[1], "latitude":latitude, "longitude":longitude, "direction":data['alp']['actions']['operation']['operand']['data'][0]}
-            )
-            # print(str(location[0])+"   "+str(location[1]))
-            print("Updated my_sensor attribute for node {}".format(node_id))
+                # finally, store the sensor attribute on the node in TB
+                response = self.device_api_controller_api.post_telemetry_using_post(
+                device_token=device_access_token,
+                json={"X":location[0], "Y":location[1],"direction":data['alp']['actions'][0]['operation']['operand']['data'][0]}  #, "latitude":latitude, "longitude":longitude, "HDOP":hdop}
+                )
+                # print(str(location[0])+"   "+str(location[1]))
 
-        except ApiException as e:
-            print("Exception when calling API: %s\n" % e)
+                print("Updated my_sensor attribute for node {}".format(node_id))
+
+            except ApiException as e:
+                print("Exception when calling API: %s\n" % e)
+
+        else:
+            print('\nElse')
+
 
     def __del__(self):
         try:
@@ -310,61 +297,58 @@ client.loop_forever()
 '''
 
 
-class Read_GPS_coordinates:
-    def __init__(self):                         # Init coordinates with unrealistic values
-        global data, latitude, longitude, ns, we, hdop
-        latitude = 91.0
-        ns = 'N'
-        longitude = 181.0
-        we = 'E'
-        hdop = 0
-        data = [latitude, ns, longitude, we, hdop]
-
-    def reset_coordinate(self):
-        global data, latitude, longitude, ns, we, hdop
-        latitude = 91.0
-        ns = 'N'
-        longitude = 181.0
-        we = 'E'
-        hdop = 0
-        data = [latitude, ns, longitude, we, hdop]
-
-    def read_coordinate(self, s):               # Read HEX string sent over LoRa and convert coordinate data
-        global data, latitude, longitude, ns, we, hdop
-        [latitude, ns, longitude, we, hdop] = s.decode('hex').split(',')
-        latitude = float(latitude)
-        longitude = float(longitude)
-        hdop = float(hdop)
-
-        deg = math.floor(latitude/100)          # Convert latitude and longitude to correct format
-        min = latitude - (deg*100)              # 51.1234567 04.1234567
-        latitude = deg + (min/60)
-        print(latitude)
-        deg = math.floor(longitude / 100)
-        min = longitude - (deg * 100)
-        longitude = deg + (min / 60)
-        print(longitude)
-
-        if ns == 'S':
-            latitude *= -1
-        if we == 'W':
-            longitude *= -1
-
-    def print_coordinate(self):
-        print('Coordinate: {}{} {}{} (HDOP = {})'.format(ns, latitude, we, longitude, hdop))
-
-
-
-
+# class Read_GPS_coordinates:
+#     def __init__(self):                         # Init coordinates with unrealistic values
+#         global data, latitude, longitude, ns, we, hdop
+#         latitude = 91.0
+#         ns = 'N'
+#         longitude = 181.0
+#         we = 'E'
+#         hdop = 0
+#         data = [latitude, ns, longitude, we, hdop]
+#
+#     def reset_coordinate(self):
+#         global data, latitude, longitude, ns, we, hdop
+#         latitude = 91.0
+#         ns = 'N'
+#         longitude = 181.0
+#         we = 'E'
+#         hdop = 0
+#         data = [latitude, ns, longitude, we, hdop]
+#
+#     def read_coordinate(self, s):               # Read HEX string sent over LoRa and convert coordinate data
+#         global data, latitude, longitude, ns, we, hdop
+#         [latitude, ns, longitude, we, hdop] = s.decode('hex').split(',')
+#         latitude = float(latitude)
+#         longitude = float(longitude)
+#         hdop = float(hdop)
+#
+#         deg = math.floor(latitude/100)          # Convert latitude and longitude to correct format
+#         min = latitude - (deg*100)              # 51.1234567 04.1234567
+#         latitude = deg + (min/60)
+#         print(latitude)
+#         deg = math.floor(longitude / 100)
+#         min = longitude - (deg * 100)
+#         longitude = deg + (min / 60)
+#         print(longitude)
+#
+#         if ns == 'S':
+#             latitude *= -1
+#         if we == 'W':
+#             longitude *= -1
+#
+#     def print_coordinate(self):
+#         print('Coordinate: {}{} {}{} (HDOP = {})'.format(ns, latitude, we, longitude, hdop))
+#
 
 
 global data, latitude, ns, longitude, we, hdop
-GPSread = Read_GPS_coordinates()
-#while True:
-s = "353131302e363538302c4e2c30303432342e3934312c452c312e31"
-GPSread.reset_coordinate()
-GPSread.read_coordinate(s)
-GPSread.print_coordinate()
+# GPSread = Read_GPS_coordinates()
+# #while True:
+# s = "353131302e363538302c4e2c30303432342e3934312c452c312e31"
+# GPSread.reset_coordinate()
+# GPSread.read_coordinate(s)
+# GPSread.print_coordinate()
 
 if __name__ == "__main__":
     Backend().run()
