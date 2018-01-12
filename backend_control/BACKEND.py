@@ -155,9 +155,10 @@ class Backend:
                                                                                                       qos=QoS(resp_mod=ResponseMode.RESP_MODE_NO),
                                                                                                       addressee=Addressee(access_class=0x11,
                                                                                                                           id_type=IdType.NOID)))
-                                                self.execute_rpc_command(entry[0], cmd)
+						self.execute_rpc_command(entry[0], cmd)
                                                 sleep(5)                                    # 2nd message is wrong message
                                                 self.execute_rpc_command(entry[0], cmd)
+						sleep(5)
 
                                             print(str(location))
                                             #  print('Distance: ' + repr(neighbors))
@@ -170,7 +171,7 @@ class Backend:
                                             matrix[0] = entry[1]
                                         elif gateway[0:5] == 'f1f7e':
                                             matrix[1] = entry[1]
-                                        elif gateway[0:5] == 'c2c4e':
+                                        elif gateway[0:5] == '427ab':
                                             matrix[2] = entry[1]
                                         elif gateway[0:5] == '43e01':
                                             matrix[3] = entry[1]
