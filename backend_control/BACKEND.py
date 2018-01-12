@@ -319,8 +319,8 @@ class Backend:
         for x in range(len(neighbors)):
             sumDist += neighbors[x][5]                      # SumDist is sum of all distances to the k nearest neighbors
             percentage.append(neighbors[x][5])              # Array of all distances
-        # percentage = [(1-(x/sumDist)) for x in percentage]
-        # sumDist = sum(percentage)
+        percentage = [(1-(x/sumDist)) for x in percentage]  # Percentages are inverted, we need a bigger percentage at smaller distances
+        sumDist = sum(percentage)
         percentage = [x/sumDist for x in percentage]        # For every distance: calculate percentage of total distance
         for x in range(len(neighbors)):                     # Translate/map neighbours to locations (x,y)
             for location in locations:
