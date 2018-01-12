@@ -113,89 +113,93 @@ class Backend:
 
         try:
             data = jsonpickle.json.loads(msg.payload)
-            print("Payload is valid JSON")
+            # print("Payload is valid JSON")
         except:
             return
-        #print(data['alp']['interface_status']['operation']['operand']['interface_status']['addressee']['id'])
-        if data['alp']['interface_status']['operation']['operand']['interface_status']['addressee']['id'] == 4771339728167632949:
-            direction = data['alp']['actions'][0]['operation']['operand']['data'][0]
-            actualtime=time.time()
-            entry = (data['deviceId'], data['alp']['interface_status']['operation']['operand']['interface_status']['link_budget'], actualtime)
-            # actualtime=float(data['timestamp'][-8:])
-            if previoustime > 8 and actualtime < 2 or previoustime < actualtime-1:
-                reset = True
-                previoustime = actualtime
-            if reset:
-                counter = 0
-                for idx, element in enumerate(matrix):
-                    if element == 0:
-                        matrix[idx] = 0
-                        counter += 1
-                if counter < 2:
-                    neighbors = self.getNeighbors(trainPs, matrix, k)
-                    location = self.calculateLocation(neighbors,direction)
-                alarm = False
-                if location[0] > 1017:          # If patient is out of safe zone for a while, set alarm!
-                    alarmcounter += 1
-                    if alarmcounter >= 1:
-                        alarm = True
-                else:
-                    alarmcounter = 0
-                print("\r\n alarm is "+str(alarm))
-                if alarm:  # If patient is out of safe zone, send ALP command (data = 3) to node to enable GPS
-                    cmd = Command.create_with_return_file_data_action(file_id=40, data=[0x03],
-                                                                      interface_type=InterfaceType.D7ASP,
-                                                                      interface_configuration=D7config(
-                                                                          qos=QoS(resp_mod=ResponseMode.RESP_MODE_NO),
-                                                                          addressee=Addressee(access_class=0x11,
-                                                                                              id_type=IdType.NOID)))
-                    self.execute_rpc_command(entry[0], cmd)
-                    sleep(5)                                    # 2nd message is wrong message
-                    self.execute_rpc_command(entry[0], cmd)
+        if 'alp' in data:
+            if data['alp']['interface_status'] is not None:
+                if data['alp']['interface_status']['operation'] is not None:
+                    if 'operand' in data['alp']['interface_status']['operation']:
+                        if 'interface_status' in data['alp']['interface_status']['operation']['operand']:
+                            if 'addressee' in data['alp']['interface_status']['operation']['operand']['interface_status']:
+                                if 'id' in data['alp']['interface_status']['operation']['operand']['interface_status']['addressee']:
+                                    if data['alp']['interface_status']['operation']['operand']['interface_status']['addressee']['id'] == 4771339728167632949:
+                                        direction = data['alp']['actions'][0]['operation']['operand']['data'][0]
+                                        actualtime=time.time()
+                                        entry = (data['deviceId'], data['alp']['interface_status']['operation']['operand']['interface_status']['link_budget'], actualtime)
+                                        # actualtime=float(data['timestamp'][-8:])
+                                        if previoustime > 8 and actualtime < 2 or previoustime < actualtime-1:
+                                            reset = True
+                                            previoustime = actualtime
+                                        if reset:
+                                            counter = 0
+                                            for idx, element in enumerate(matrix):
+                                                if element == 0:
+                                                    matrix[idx] = 0
+                                                    counter += 1
+                                            if counter < 2:
+                                                neighbors = self.getNeighbors(trainPs, matrix, k)
+                                                location = self.calculateLocation(neighbors,direction)
+                                            alarm = False
+                                            if location[0] > 1017:          # If patient is out of safe zone for a while, set alarm!
+                                                alarmcounter += 1
+                                                if alarmcounter >= 1:
+                                                    alarm = True
+                                            else:
+                                                alarmcounter = 0
+                                            print("\r\n alarm is "+str(alarm))
+                                            if alarm:  # If patient is out of safe zone, send ALP command (data = 3) to node to enable GPS
+                                                cmd = Command.create_with_return_file_data_action(file_id=40, data=[0x03],
+                                                                                                  interface_type=InterfaceType.D7ASP,
+                                                                                                  interface_configuration=D7config(
+                                                                                                      qos=QoS(resp_mod=ResponseMode.RESP_MODE_NO),
+                                                                                                      addressee=Addressee(access_class=0x11,
+                                                                                                                          id_type=IdType.NOID)))
+                                                self.execute_rpc_command(entry[0], cmd)
+                                                sleep(5)                                    # 2nd message is wrong message
+                                                self.execute_rpc_command(entry[0], cmd)
 
-                print(str(location))
-                #  print('Distance: ' + repr(neighbors))
+                                            print(str(location))
+                                            #  print('Distance: ' + repr(neighbors))
 
-                reset = False
-                matrix = [0, 0, 0, 0]
+                                            reset = False
+                                            matrix = [0, 0, 0, 0]
 
-            gateway = entry[0]
-            if gateway[0:5] == 'b6b48':
-                matrix[0] = entry[1]
-            elif gateway[0:5] == 'f1f7e':
-                matrix[1] = entry[1]
-            elif gateway[0:5] == 'c2c4e':
-                matrix[2] = entry[1]
-            elif gateway[0:5] == '43e01':
-                matrix[3] = entry[1]
-            else:
-                print ("gateway not found   " + gateway[0:5])
+                                        gateway = entry[0]
+                                        if gateway[0:5] == 'b6b48':
+                                            matrix[0] = entry[1]
+                                        elif gateway[0:5] == 'f1f7e':
+                                            matrix[1] = entry[1]
+                                        elif gateway[0:5] == 'c2c4e':
+                                            matrix[2] = entry[1]
+                                        elif gateway[0:5] == '43e01':
+                                            matrix[3] = entry[1]
+                                        else:
+                                            print ("gateway not found   " + gateway[0:5])
 
-            # save the parsed sensor data as an attribute to the device, using the TB API
-            try:
-                # first get the deviceId mapped to the device name
-                node_id = 4237343400240035
-                response = self.device_controller_api.get_tenant_device_using_get(device_name=str(node_id))
-                device_id = response.id.id
+                                        # save the parsed sensor data as an attribute to the device, using the TB API
+                                        try:
+                                            # first get the deviceId mapped to the device name
+                                            node_id = 4237343400240035
+                                            response = self.device_controller_api.get_tenant_device_using_get(device_name=str(node_id))
+                                            device_id = response.id.id
 
-                # next, get the access token of the device
-                response = self.device_controller_api.get_device_credentials_by_device_id_using_get(device_id=device_id)
-                device_access_token = response.credentials_id
+                                            # next, get the access token of the device
+                                            response = self.device_controller_api.get_device_credentials_by_device_id_using_get(device_id=device_id)
+                                            device_access_token = response.credentials_id
 
-                # finally, store the sensor attribute on the node in TB
-                response = self.device_api_controller_api.post_telemetry_using_post(
-                device_token=device_access_token,
-                json={"X":location[0], "Y":location[1], "direction":direction}
-                )
-                # print(str(location[0])+"   "+str(location[1]))
+                                            # finally, store the sensor attribute on the node in TB
+                                            response = self.device_api_controller_api.post_telemetry_using_post(
+                                            device_token=device_access_token,
+                                            json={"X":location[0], "Y":location[1], "direction":direction}
+                                            )
+                                            # print(str(location[0])+"   "+str(location[1]))
 
-                print("Updated my_sensor attribute for node {}".format(node_id))
+                                            # print("Updated my_sensor attribute for node {}".format(node_id))
 
-            except ApiException as e:
-                print("Exception when calling API: %s\n" % e)
-
-        else:
-            print('\nElse')
+                                        except ApiException as e:
+                                            pass
+                                            # print("Exception when calling API: %s\n" % e)
 
     def on_message_loriot(self, client, config, msg):   # s = "353131302e363538302c4e2c30303432342e3934312c452c312e31"
         try:
