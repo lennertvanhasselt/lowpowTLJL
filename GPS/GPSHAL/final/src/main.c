@@ -56,12 +56,14 @@ static void MX_USART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_I2C1_Init(void);
-static void sendCoord(void);
 static void initGPS(void);
 static void enterSleep(uint32_t regulator);
 
 int main(void)
 {
+	char buffer[128], sendbuffer[27], latitude[9], buflatitude[9], longitude[9], buflongitude[9], ns[1], ew[1], lock[1], hdop[3];
+	uint8_t character[1];
+	int j = 0, i = 0, internalCount = 0, commaCount = 0;
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
@@ -77,7 +79,9 @@ int main(void)
   MX_I2C1_Init();
 
   /* Initialize GPS to send specific data on specific date in time. */
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
   initGPS();
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
 
   /* Infinite loop */
   while (1)
@@ -91,7 +95,6 @@ int main(void)
 			notEnabled = 1;
 			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
 			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
-			for(int i=0; i<65535; i++);
 			HAL_Delay(100);
 			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
 			enableCompass = 0;
@@ -111,10 +114,144 @@ int main(void)
 
 	  /* Lower power regulator mode for the system, its system frequency will not exceed 2MHz (ref. Mastering STM32 p536)*/
 	  HAL_PWREx_EnableLowPowerRunMode();
-	  HAL_UART_Transmit(&huart2, "Enter the underworld \n\r",sizeof("Enter the underworld \n\r"), HAL_MAX_DELAY);
 
-	  /* Function where GPS data will be parsed and send */
-	  sendCoord();
+	  	/*
+	  	 * Check the received character and put it in the buffer.
+	  	 * If the character is the end of a line the NMEA command is complete.
+	  	 */
+	  	if (HAL_UART_Receive_IT(&huart1, character, 1) == HAL_OK)
+	  	{
+	  		/* Filling the buffer with the received characters */
+	  		buffer[i - 1] = *character;
+			HAL_UART_Transmit(&huart2, character, sizeof(character),HAL_MAX_DELAY);
+	  		/* When the end of a NMEA command is detected */
+	  		if (*character == '\n')
+	  		{
+	  			commaCount = 0;
+	  			internalCount = 0;
+
+	  			/* Only 8 commas needed to parse the needed parts */
+	  			for (j = 0; commaCount < 9; j++)
+	  			{
+	  				/* Counting Commas to determine which part we want to save. */
+	  				if (buffer[j] == 0x2c)
+	  				{
+	  					commaCount++;
+	  					j++;
+	  				}
+	  				switch (commaCount)
+	  				{
+	  				case 2:
+	  				{	/* Get latitude */
+	  					latitude[internalCount] = buffer[j];
+	  					internalCount++;
+	  					break;
+	  				}
+	  				case 3:
+	  				{   /* Get North/South */
+	  					internalCount = 0;
+	  					ns[internalCount] = buffer[j];
+	  					break;
+	  				}
+	  				case 4:
+	  				{	/* Get longitude */
+	  					longitude[internalCount] = buffer[j];
+	  					internalCount++;
+	  					break;
+	  				}
+	  				case 5:
+	  				{   /* Get East/West */
+	  					internalCount = 0;
+	  					ew[internalCount] = buffer[j];
+	  					break;
+	  				}
+	  				case 6:
+	  				{	/* Get Lock */
+	  					lock[internalCount] = buffer[j];
+	  					break;
+	  				}
+	  				case 8:
+	  				{	/* Get HDOP */
+	  					hdop[internalCount] = buffer[j];
+	  					internalCount++;
+	  					break;
+	  				}
+	  				}
+	  			}
+
+	  			/* Only update the location when the received values are different form the previous one and if the GPS has a lock.*/
+	  			if ((((strcmp(buflatitude, latitude)) != 0) || ((strcmp(buflongitude, longitude)) != 0)) && (lock[0] == '1'))
+	  			{
+	  				for (j = 0; j < 9; j++)
+	  				{
+	  					buflatitude[j] = latitude[j];
+	  				}
+	  				for (j = 0; j < 9; j++)
+	  				{
+	  					buflongitude[j] = longitude[j];
+	  				}
+
+	  				uint8_t AT_COMMAND[] = { 0x41, 0x54, 0x2b, 0x53, 0x45, 0x4e,
+	  				                        0x44, 0x3d, 0x31, 0x32, 0x3a };
+
+	  				/* Merge the desired fields in 1 array. */
+	  				for (j = 0; j < 27; j++)
+	  				{
+	  					if (j == 9 || j == 11 || j == 21 || j == 23)
+	  					{
+	  						sendbuffer[j] = 0x2c;
+	  					} else if (j < 9)
+	  					{
+	  						sendbuffer[j] = latitude[j];
+	  					} else if (j < 11)
+	  					{
+	  						sendbuffer[j] = ns[0];
+	  					} else if (j < 21)
+	  					{
+	  						sendbuffer[j] = longitude[j - 12];
+	  					} else if (j < 23)
+	  					{
+	  						sendbuffer[j] = ew[0];
+	  					} else if (j < 27)
+	  					{
+	  						sendbuffer[j] = hdop[j - 24];
+	  					}
+	  				}
+	  				HAL_UART_Transmit(&huart2, AT_COMMAND, sizeof(AT_COMMAND),HAL_MAX_DELAY);
+					HAL_UART_Transmit(&huart2, sendbuffer, sizeof(sendbuffer),HAL_MAX_DELAY);
+					HAL_UART_Transmit(&huart2, (uint8_t*) "\n\r", sizeof("\n\r"),HAL_MAX_DELAY);
+
+	  				HAL_UART_Transmit(&huart3, AT_COMMAND, sizeof(AT_COMMAND),HAL_MAX_DELAY);
+	  				HAL_UART_Transmit(&huart3, sendbuffer, sizeof(sendbuffer),HAL_MAX_DELAY);
+	  				HAL_UART_Transmit(&huart3, (uint8_t*) "\n\r", sizeof("\n\r"),HAL_MAX_DELAY);
+	  			}
+
+	  			/*
+	  			 * Usable off GPS, On Compass part designed for bigger areas
+	  			 * The system will switch from GPS to compass when the user is back in the safe zone.
+	  			 * THe safe zone latitude and longitude will be hardcoded in the system.
+	  			 */
+	  			/*if(((strcmp(latitude,latitudeMax)) > 0) || ((strcmp(latitude,latitudeMin)) < 0) || ((strcmp(longitude,longitudeMax)) > 0) || ((strcmp(longitude,longitudeMin)) < 0))
+	  			 {
+	  			 char latitudeMax[9] = {0x35, 0x31, 0x2E, 0x31, 0x37, 0x37, 0x36, 0x33, 0x33};
+	  			 char latitudeMin[9] = {0x35, 0x31, 0x2E, 0x31, 0x37, 0x37, 0x36, 0x30, 0x30};
+	  			 char longitudeMax[9] = {0x34, 0x2E, 0x34, 0x31, 0x35, 0x36, 0x38, 0x33, 0x33};
+	  			 char longitudeMin[9] = {0x34, 0x2E, 0x34, 0x31, 0x35, 0x36, 0x38, 0x30, 0x30};
+
+	  			 notEnabled = 1;
+	  			 HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
+	  			 HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
+	  			 HAL_Delay(50);
+	  			 HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
+	  			 }*/
+
+	  			/* Reset buffer index */
+	  			i = 0;
+	  		}
+	  		/* increase the buffer index to fill the buffer with characters */
+	  		i = i + 1;
+
+	  	}
 	}
 }
 
@@ -123,150 +260,13 @@ void initGPS()
 {
 	//uint8_t setGPGGA[] = {0x24, 0x50, 0x53, 0x52, 0x46, 0x31, 0x30, 0x33, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x30, 0x2c, 0x36, 0x30, 0x2c, 0x30, 0x31, 0x2a, 0x32, 0x32, 0x0d, 0x0a };	//Set GPGGA to update every 60s
 	uint8_t setGPGGA[] = {0x24, 0x50, 0x53, 0x52, 0x46, 0x31, 0x30, 0x33, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x30, 0x2c, 0x31, 0x30, 0x2c, 0x30, 0x31, 0x2a, 0x32, 0x35, 0x0d, 0x0a}; //Set GPGGA to update every 10s
-	HAL_UART_Transmit(&huart1, setGPGGA, 28, HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart1, setGPGGA, 25, HAL_MAX_DELAY);
 	uint8_t setGPGSA[] = {0x24, 0x50, 0x53, 0x52, 0x46, 0x31, 0x30, 0x33, 0x2c, 0x30, 0x32, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x31, 0x2a, 0x32, 0x36, 0x0d, 0x0a}; //Disable GPGSA
 	HAL_UART_Transmit(&huart1, setGPGSA, 25, HAL_MAX_DELAY);
 	uint8_t setGPGSV[] = {0x24, 0x50, 0x53, 0x52, 0x46, 0x31, 0x30, 0x33, 0x2c, 0x30, 0x33, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x31, 0x2a, 0x32, 0x37, 0x0d, 0x0a}; //Disable GPGSV
 	HAL_UART_Transmit(&huart1, setGPGSV, 25, HAL_MAX_DELAY);
 	uint8_t setGPRMC[] = {0x24, 0x50, 0x53, 0x52, 0x46, 0x31, 0x30, 0x33, 0x2c, 0x30, 0x34, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x31, 0x2a, 0x32, 0x30, 0x0d, 0x0a}; //Disable GPRMC
 	HAL_UART_Transmit(&huart1, setGPRMC, 25, HAL_MAX_DELAY);
-}
-
-/* Receiving, parsing, comparing GPS data before sending it */
-void sendCoord()
-{
-	char buffer[128], sendbuffer[27], latitude[9], buflatitude[9], longitude[9], buflongitude[9], ns[1], ew[1], lock[1], hdop[3];
-	uint8_t character[1];
-	int j = 0, i = 0, internalCount = 0, commaCount = 0;
-
-	/*
-	 * Check the received character and put it in the buffer.
-	 * If the character is the end of a line the NMEA command is complete.
-	 */
-	if (HAL_UART_Receive_IT(&huart1, character, 1) == HAL_OK)
-	{
-		/* Filling the buffer with the received characters */
-		buffer[i - 1] = *character;
-
-		/* When the end of a NMEA command is detected */
-		if (*character == '\n')
-		{
-			commaCount = 0;
-			internalCount = 0;
-
-			/* Only 8 commas needed to parse the needed parts */
-			for (j = 0; commaCount < 9; j++)
-			{
-				/* Counting Commas to determine which part we want to save. */
-				if (buffer[j] == 0x2c)
-				{
-					commaCount++;
-					j++;
-				}
-				switch (commaCount)
-				{
-				case 2:
-				{	/* Get latitude */
-					latitude[internalCount] = buffer[j];
-					internalCount++;
-					break;
-				}
-				case 3:
-				{   /* Get North/South */
-					internalCount = 0;
-					ns[internalCount] = buffer[j];
-					break;
-				}
-				case 4:
-				{	/* Get longitude */
-					longitude[internalCount] = buffer[j];
-					internalCount++;
-					break;
-				}
-				case 5:
-				{   /* Get East/West */
-					internalCount = 0;
-					ew[internalCount] = buffer[j];
-					break;
-				}
-				case 6:
-				{	/* Get Lock */
-					lock[internalCount] = buffer[j];
-					break;
-				}
-				case 8:
-				{	/* Get HDOP */
-					hdop[internalCount] = buffer[j];
-					internalCount++;
-					break;
-				}
-				}
-			}
-
-			/* Only update the location when the received values are different form the previous one and if the GPS has a lock.*/
-			if ((((strcmp(buflatitude, latitude)) != 0) || ((strcmp(buflongitude, longitude)) != 0)) && (lock[0] == '1'))
-			{
-				for (j = 0; j < 9; j++)
-				{
-					buflatitude[j] = latitude[j];
-				}
-				for (j = 0; j < 9; j++)
-				{
-					buflongitude[j] = longitude[j];
-				}
-
-				/* Merge the desired fields in 1 array. */
-				for (j = 0; j < 27; j++)
-				{
-					if (j == 9 || j == 11 || j == 21 || j == 23)
-					{
-						sendbuffer[j] = 0x2c;
-					} else if (j < 9)
-					{
-						sendbuffer[j] = latitude[j];
-					} else if (j < 11)
-					{
-						sendbuffer[j] = ns[0];
-					} else if (j < 21)
-					{
-						sendbuffer[j] = longitude[j - 12];
-					} else if (j < 23)
-					{
-						sendbuffer[j] = ew[0];
-					} else if (j < 27)
-					{
-						sendbuffer[j] = hdop[j - 24];
-					}
-				}
-				HAL_UART_Transmit(&huart2, sendbuffer, sizeof(sendbuffer),HAL_MAX_DELAY);
-				HAL_UART_Transmit(&huart2, (uint8_t*) "\n\r", sizeof("\n\r"),HAL_MAX_DELAY);
-			}
-
-			/*
-			 * Usable off GPS, On Compass part designed for bigger areas
-			 * The system will switch from GPS to compass when the user is back in the safe zone.
-			 * THe safe zone latitude and longitude will be hardcoded in the system.
-			 */
-			/*if(((strcmp(latitude,latitudeMax)) > 0) || ((strcmp(latitude,latitudeMin)) < 0) || ((strcmp(longitude,longitudeMax)) > 0) || ((strcmp(longitude,longitudeMin)) < 0))
-			 {
-			 char latitudeMax[9] = {0x35, 0x31, 0x2E, 0x31, 0x37, 0x37, 0x36, 0x33, 0x33};
-			 char latitudeMin[9] = {0x35, 0x31, 0x2E, 0x31, 0x37, 0x37, 0x36, 0x30, 0x30};
-			 char longitudeMax[9] = {0x34, 0x2E, 0x34, 0x31, 0x35, 0x36, 0x38, 0x33, 0x33};
-			 char longitudeMin[9] = {0x34, 0x2E, 0x34, 0x31, 0x35, 0x36, 0x38, 0x30, 0x30};
-
-			 notEnabled = 1;
-			 HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
-			 HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
-			 HAL_Delay(50);
-			 HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
-			 }*/
-
-			/* Reset buffer index */
-			i = 0;
-		}
-		/* increase the buffer index to fill the buffer with characters */
-		i = i + 1;
-	}
 }
 
 /*
@@ -363,6 +363,8 @@ static void MX_USART1_UART_Init(void)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
+  HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(USART1_IRQn);
 
 }
 
@@ -390,7 +392,7 @@ static void MX_USART3_UART_Init(void)
 {
 
   huart3.Instance = USART3;
-  huart3.Init.BaudRate = 115200;
+  huart3.Init.BaudRate = 9600;
   huart3.Init.WordLength = UART_WORDLENGTH_8B;
   huart3.Init.StopBits = UART_STOPBITS_1;
   huart3.Init.Parity = UART_PARITY_NONE;
