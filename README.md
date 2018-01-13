@@ -10,15 +10,15 @@ Master Students: Liam Oorts, Thomas Janssen, Lennert Van Hasselt &amp; Jonas Ver
 ## Setup
 Several technologies are used to localize the elderly in a health care center. The position can be monitored in indoor and outdoor environments. 
 
-![communication](https://github.com/lennertvanhasselt/lowpowTLJL/images/communication.png "Communication")
+![communication](https://github.com/lennertvanhasselt/lowpowTLJL/tree/master/images/communication.png "Communication")
 
-![dataflow](https://github.com/lennertvanhasselt/lowpowTLJL/images/dataflow.png "Dataflow")
+![dataflow](https://github.com/lennertvanhasselt/lowpowTLJL/tree/master/images/dataflow.png "Dataflow")
 
 
 ### Indoor localization 
 To perform indoor localization, a DASH7 fingerprinting database (with RSSI as a metric) is created and a weighted kNN algorithm is used. The direction the person is facing to is calculated with an eCompass. This is a tilt-compensated compass with accelerometer and magnetometer. The position inside the health care center and direction are sent to the backend. If the person reaches the edge of the 'safe zone' an alarm is sent over DASH7 to enable the outdoor localization.
 
-![training points](https://github.com/lennertvanhasselt/lowpowTLJL/images/trainingspunten.png "Training points")
+![training points](https://github.com/lennertvanhasselt/lowpowTLJL/tree/master/images/trainingspunten.png "Training points")
 
 
 ### Outdoor localization
