@@ -10,9 +10,9 @@ Master Students: Liam Oorts, Thomas Janssen, Lennert Van Hasselt &amp; Jonas Ver
 ## Setup
 Several technologies are used to localize the elderly in a health care center. The position can be monitored in indoor and outdoor environments. 
 
-![communication](images/communication.png "Communication")
+![communication](images/communication.png |width=630)
 
-![dataflow](images/dataflow.png "Dataflow")
+![dataflow](images/dataflow.png |width=630)
 
 
 ### Indoor localization 
