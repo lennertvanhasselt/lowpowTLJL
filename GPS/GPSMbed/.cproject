@@ -97,8 +97,6 @@
 								</option>
 								<option id="org.eclipse.cdt.build.core.settings.holder.symbols.496389156" superClass="org.eclipse.cdt.build.core.settings.holder.symbols" valueType="definedSymbols">
 									
-                                    <listOptionValue builtIn="false" value="DEVICE_SPI=1"/>
-                                    
                                     <listOptionValue builtIn="false" value="__MBED__=1"/>
                                     
                                     <listOptionValue builtIn="false" value="DEVICE_I2CSLAVE=1"/>
@@ -141,6 +139,8 @@
                                     
                                     <listOptionValue builtIn="false" value="TARGET_M3"/>
                                     
+                                    <listOptionValue builtIn="false" value="MBED_BUILD_TIMESTAMP=1515875698.91"/>
+                                    
                                     <listOptionValue builtIn="false" value="DEVICE_SERIAL=1"/>
                                     
                                     <listOptionValue builtIn="false" value="TARGET_STM32L152RE"/>
@@ -177,7 +177,7 @@
                                     
                                     <listOptionValue builtIn="false" value="TOOLCHAIN_GCC_ARM"/>
                                     
-                                    <listOptionValue builtIn="false" value="MBED_BUILD_TIMESTAMP=1511962448.25"/>
+                                    <listOptionValue builtIn="false" value="DEVICE_SPI=1"/>
                                     
                                     <listOptionValue builtIn="false" value="DEVICE_SPISLAVE=1"/>
                                     
@@ -222,8 +222,6 @@
 								</option>
 								<option id="org.eclipse.cdt.build.core.settings.holder.symbols.1395532696" superClass="org.eclipse.cdt.build.core.settings.holder.symbols" valueType="definedSymbols">
 									
-                                    <listOptionValue builtIn="false" value="DEVICE_SPI=1"/>
-                                    
                                     <listOptionValue builtIn="false" value="__MBED__=1"/>
                                     
                                     <listOptionValue builtIn="false" value="DEVICE_I2CSLAVE=1"/>
@@ -266,6 +264,8 @@
                                     
                                     <listOptionValue builtIn="false" value="TARGET_M3"/>
                                     
+                                    <listOptionValue builtIn="false" value="MBED_BUILD_TIMESTAMP=1515875698.91"/>
+                                    
                                     <listOptionValue builtIn="false" value="DEVICE_SERIAL=1"/>
                                     
                                     <listOptionValue builtIn="false" value="TARGET_STM32L152RE"/>
@@ -302,7 +302,7 @@
                                     
                                     <listOptionValue builtIn="false" value="TOOLCHAIN_GCC_ARM"/>
                                     
-                                    <listOptionValue builtIn="false" value="MBED_BUILD_TIMESTAMP=1511962448.25"/>
+                                    <listOptionValue builtIn="false" value="DEVICE_SPI=1"/>
                                     
                                     <listOptionValue builtIn="false" value="DEVICE_SPISLAVE=1"/>
                                     

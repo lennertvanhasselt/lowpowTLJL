@@ -1,16 +1,27 @@
 #include "mbed.h"
 #include <string>
 
+/* UART Communications */
 Serial pc(SERIAL_TX, SERIAL_RX);
-Serial device(PB_6, PA_10);  // D10(TX), D2(RX)
-char label[6], message[256], search[6];
+Serial device(PA_9, PA_10);  // D8(TX), D2(RX)
+
+/* Used variables */
+//http://www.online-toolz.com/tools/text-hex-convertor.php
+//http://www.hhhh.org/wiml/proj/nmeaxor.html
+//uint8_t setGPGGA[] = {0x24, 0x50, 0x53, 0x52, 0x46, 0x31, 0x30, 0x33, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x30, 0x2c, 0x31, 0x30, 0x2c, 0x30, 0x31, 0x2a, 0x32, 0x35, 0x0d, 0x0a}; //Set GPGGA to update every 10s
+uint8_t setGPGGA[] = {0x24, 0x50, 0x53, 0x52, 0x46, 0x31, 0x30, 0x33, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x31, 0x2c, 0x30, 0x31, 0x2a, 0x32, 0x35, 0x0d, 0x0a}; //Set GPGGA to update every 1s
+uint8_t setGPGSA[] = {0x24, 0x50, 0x53, 0x52, 0x46, 0x31, 0x30, 0x33, 0x2c, 0x30, 0x32, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x31, 0x2a, 0x32, 0x36, 0x0d, 0x0a}; //Disable
+uint8_t setGPGSV[] = {0x24, 0x50, 0x53, 0x52, 0x46, 0x31, 0x30, 0x33, 0x2c, 0x30, 0x33, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x31, 0x2a, 0x32, 0x37, 0x0d, 0x0a}; //Disable
+uint8_t setGPRMC[] = {0x24, 0x50, 0x53, 0x52, 0x46, 0x31, 0x30, 0x33, 0x2c, 0x30, 0x34, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x30, 0x2c, 0x30, 0x31, 0x2a, 0x32, 0x30, 0x0d, 0x0a}; //Disable
 string temp = "GPGGA";
 float buflongitude, buflatitude, longitude, latitude, timestamp, hdop, degrees, minutes;
-char ns, ew;
+char ns, ew, label[6], message[256], search[6], sendCommand[100];
 int satUsed,lock;
 bool update = false;
 
-//Floor values
+/*
+ * Input value will be floored. 
+ */
 float trunc(float value) {
     if(value < 0.0) {
         value*= -1.0;
@@ -22,7 +33,19 @@ float trunc(float value) {
     return value;
 }
 
-//Get a new NMEA line
+/*
+ * Sending the input values to the GPS 
+ */
+void setGPSTypes(uint8_t type[]) {
+    for(int i=0; i<256; i++){
+        device.putc(type[i]);
+    }
+}
+
+/*
+ * Receiving the NMEA lines from GPS.
+ * After the configuration, this means only GPGGA after x seconds.
+ */
 void getline(){
     if (device.readable()){
         //Wait for the start of a line
@@ -49,6 +72,11 @@ void getline(){
     }
 }
 
+/*
+ * When the received NMEA line is the requested one, parsing can start.
+ * After parsing, the values longitude and latitude will be converted to degrees 
+ * before sending.
+ */
 void orient(){
     if(update){
         //Store the data from message in the correct variable
@@ -86,12 +114,20 @@ void orient(){
     }
 }
 
+/*
+ * Main function where every other function is called from.
+ */
 int main() {
     //Initialize baudrate for GPS module
     device.baud(4800);
     //Create the char for comparison
     strncpy(search, temp.c_str(), sizeof(search));
     search[sizeof(search)-1] = 0;
+    setGPSTypes(setGPGGA);
+    setGPSTypes(setGPGSA);
+    setGPSTypes(setGPGSV);
+    setGPSTypes(setGPRMC);
+    
     while(1) {
         getline();
         orient();
