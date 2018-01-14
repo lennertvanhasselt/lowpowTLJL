@@ -37,7 +37,7 @@ def on_message(client, userdata, msg):
 
     global previous_time, rssis, gateways, counter
     actual_time = float(data['timestamp'][-8:])
-    if previous_time > 8 and actual_time < 2 or previous_time < actual_time - 1:  # database creatie: wacht op bericht van GW die nog niet heeft geantwoord
+    if previous_time > 8 and actual_time < 2 or previous_time < actual_time - 1:  # Wait for message of GW that did not respond yet
         previous_time = actual_time
 
     if len(gateways) == 4:
@@ -65,7 +65,7 @@ def on_message(client, userdata, msg):
         write_database(rssis)                                       # and write data to database
         if counter == 5:
             client.disconnect()                                     # disconnect MQTT broker
-            winsound.Beep(840, 250)
+            winsound.Beep(840, 250)									# 'beep' if measurement is done
 
 
 # Write entry to datasbase in the format (nr,RSSI1,RSSI2,RSSI3,RSSI4)

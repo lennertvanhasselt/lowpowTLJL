@@ -49,6 +49,6 @@ Since the objective was to make this project low power, the power consumption ha
 
 To give an idea of how much power the project consumes, the graphs below depict the power consumption of the eCompass and the GPS.
 
-![power](image/power_GPS.png "Power measurement of GPS module")
+![power](images/power_GPS.png "Power measurement of GPS module")
 
 ![power](images/power_ecompass.png "Power measurement of eCompass")
