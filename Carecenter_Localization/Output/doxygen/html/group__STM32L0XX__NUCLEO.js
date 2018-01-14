@@ -1,4 +1,0 @@
-var group__STM32L0XX__NUCLEO =
-[
-    [ "STM32L0XX_NUCLEO_LOW_LEVEL", "group__STM32L0XX__NUCLEO__LOW__LEVEL.html", "group__STM32L0XX__NUCLEO__LOW__LEVEL" ]
-];

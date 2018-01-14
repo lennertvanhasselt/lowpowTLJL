@@ -1,4 +1,0 @@
-var group__STM32L4XX__NUCLEO__BUTTON =
-[
-    [ "USER_BUTTON_PIN", "group__STM32L4XX__NUCLEO__BUTTON.html#ga34df6915e3013d6a0c74131d3946b659", null ]
-];
