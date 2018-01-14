@@ -1,0 +1,25 @@
+var x__nucleo__iks01a1__imu__6axes_8h =
+[
+    [ "BSP_IMU_6AXES_Check_XG_ID", "x__nucleo__iks01a1__imu__6axes_8h.html#ga5aa784882978dec15e61de7371de940a", null ],
+    [ "BSP_IMU_6AXES_Disable_Free_Fall_Detection_Ext", "x__nucleo__iks01a1__imu__6axes_8h.html#ga05addae0a19e4ac330a1f438fbdcf901", null ],
+    [ "BSP_IMU_6AXES_Enable_Free_Fall_Detection_Ext", "x__nucleo__iks01a1__imu__6axes_8h.html#gaf801f9ffd03dc53579ac8e8d18f920fb", null ],
+    [ "BSP_IMU_6AXES_G_Get_FS", "x__nucleo__iks01a1__imu__6axes_8h.html#ga4b25c4e1517a9f28a1a8d68a36185271", null ],
+    [ "BSP_IMU_6AXES_G_Get_ODR", "x__nucleo__iks01a1__imu__6axes_8h.html#ga067930aaa05262034738fa6228bcf67b", null ],
+    [ "BSP_IMU_6AXES_G_GetAxes", "x__nucleo__iks01a1__imu__6axes_8h.html#gaacdac8ab2d4526d4e9b57213c888a3fd", null ],
+    [ "BSP_IMU_6AXES_G_GetAxesRaw", "x__nucleo__iks01a1__imu__6axes_8h.html#gaaecad68c2f9a04051dcaeaeaeda44b54", null ],
+    [ "BSP_IMU_6AXES_G_GetSensitivity", "x__nucleo__iks01a1__imu__6axes_8h.html#gacee44d92ffd47a2bc715d3b324bcf109", null ],
+    [ "BSP_IMU_6AXES_G_Set_FS", "x__nucleo__iks01a1__imu__6axes_8h.html#gae4974eff7e4bb7feb02ce2717128ee2b", null ],
+    [ "BSP_IMU_6AXES_G_Set_ODR", "x__nucleo__iks01a1__imu__6axes_8h.html#gac071707227579a7ea1d3d6ff1c030a31", null ],
+    [ "BSP_IMU_6AXES_Get_Status_Free_Fall_Detection_Ext", "x__nucleo__iks01a1__imu__6axes_8h.html#ga0ae01099b23eeaf7f0cdcf85c8aa09e2", null ],
+    [ "BSP_IMU_6AXES_GetComponentType", "x__nucleo__iks01a1__imu__6axes_8h.html#ga5042f8b602e730ad80ac43cfb6e0251b", null ],
+    [ "BSP_IMU_6AXES_Init", "x__nucleo__iks01a1__imu__6axes_8h.html#gad5fd5ba09f6b3d99707f6558733abc27", null ],
+    [ "BSP_IMU_6AXES_isInitialized", "x__nucleo__iks01a1__imu__6axes_8h.html#ga802d73aad455095fb2edad2f0a87fd58", null ],
+    [ "BSP_IMU_6AXES_Read_XG_ID", "x__nucleo__iks01a1__imu__6axes_8h.html#ga7d6b9fffc3d5490ca2246a6153d2a52d", null ],
+    [ "BSP_IMU_6AXES_X_Get_FS", "x__nucleo__iks01a1__imu__6axes_8h.html#ga6198269f56b455ea879800f984ab1935", null ],
+    [ "BSP_IMU_6AXES_X_Get_ODR", "x__nucleo__iks01a1__imu__6axes_8h.html#gaedac6a4e6995a7d7399a5d4400880ced", null ],
+    [ "BSP_IMU_6AXES_X_GetAxes", "x__nucleo__iks01a1__imu__6axes_8h.html#ga10442acb7fd27d1bf65f7602319d31c5", null ],
+    [ "BSP_IMU_6AXES_X_GetAxesRaw", "x__nucleo__iks01a1__imu__6axes_8h.html#gab1a06ec06c646868c008220ae027456a", null ],
+    [ "BSP_IMU_6AXES_X_GetSensitivity", "x__nucleo__iks01a1__imu__6axes_8h.html#gad3ea884001af1d6bbaff4f87582f0d9d", null ],
+    [ "BSP_IMU_6AXES_X_Set_FS", "x__nucleo__iks01a1__imu__6axes_8h.html#gac7df7406b121ecd94749a145dca9c389", null ],
+    [ "BSP_IMU_6AXES_X_Set_ODR", "x__nucleo__iks01a1__imu__6axes_8h.html#ga0879227c74152b6c6571a6450d17593d", null ]
+];

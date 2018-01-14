@@ -1,3 +1,4 @@
+
 # lowpowTLJL: Monitoring Runaway Behavior
 
 ## Information
@@ -12,6 +13,17 @@ Several technologies are used to localize the elderly in a health care center. T
 
 ![communication](images/communication.png "Communication")
 
+The following hardware is used to setup the project:
+
+ - 2 x Nucleo L152-RE (Node)
+ - Discovery board: B-L072Z-LRWAN1 (DASH7)
+ - Discovery board: B-L072Z-LRWAN1 (LoRaWAN)
+ - LPM01A-board for power measurements
+ - EM506 (GPS module)
+ - IKS-01A2 (MEMS board)
+ 
+The software for the project is developed in STM32 HAL, Mbed and Python scripts. The dataflow is made visible in the figure below.
+ 
 ![dataflow](images/dataflow.png "Dataflow")
 
 
@@ -29,6 +41,14 @@ To perform outdoor localization, GPS coordinates are sent over a LoRaWAN network
 In the backend, all data is received via an MQTT broker. The fingerprinting algorithm runs in the backend.py script. When the person moves out of the safe zone, an alarm is triggered and the backend sneds a signal over DASH7 to enable the GPS of the node. All useful data is sent in a JSON string to [our Thingsboard](http://thingsboard.idlab.uantwerpen.be:8080/dashboards/6788ecf0-cace-11e7-9f1b-85e6dd10a2e8) to visualize the data.
 
 ## Power measurements
-Power measurements are included in the presentation, which can be found in this repository.
+Since the objective was to make this project low power, the power consumption has been reduced in the following ways:
 
+ - Boards go into low power sleep modes if not used and are woken by interrupts. 
+ - For the discovery boards and GPS module, transistors are used to switch the modules on or off.
+ - Solder bridge SB18 of B-L072Z-LRWAN1 discovery boards are opened to toggle LED 7 off, reducing power consumption.
 
+To give an idea of how much power the project consumes, the graphs below depict the power consumption of the eCompass and the GPS.
+
+![power](image/power_GPS.png "Power measurement of GPS module")
+
+![power](images/power_ecompass.png "Power measurement of eCompass")
