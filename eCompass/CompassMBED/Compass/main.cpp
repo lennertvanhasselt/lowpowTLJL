@@ -14,8 +14,6 @@
             *Use magnetometer values together with roll, pitch and jaw to calculate tilt compensated direction
             *Map values to wind directions
             *Send wind direction values in D7 command
-        *When RX receives data: 0x03 (Didn't work, button replaced rx-interrupt)
-            *Shutdown everything, activate GPS and activate interrupt to wake up
 */
 
 #include "mbed.h"
@@ -83,7 +81,7 @@ void wakeHandle(){
 }
 
 /* Initialisation Magnetometer  */
-void initMag(uint8_t id, int32_t Maxes[3], float *hardCor, float *softCor){
+void initMag(uint8_t id, int32_t Maxes[3], float *hardCor){
     LSM303AGR_MAG_W_LP(magnetometer, LSM303AGR_MAG_LP_MODE);                //Enables low power mode
     LSM303AGR_MAG_W_OFF_CANC(magnetometer, LSM303AGR_MAG_OFF_CANC_DISABLED);//Disable offset cancellation
     LSM303AGR_MAG_W_INT_MAG(magnetometer, LSM303AGR_MAG_INT_MAG_ENABLED);   //Enable DRDY signal
@@ -107,6 +105,7 @@ void initMag(uint8_t id, int32_t Maxes[3], float *hardCor, float *softCor){
              if(mag_temp[jj] > mag_max[jj]) mag_max[jj] = mag_temp[jj];  
              if(mag_temp[jj] < mag_min[jj]) mag_min[jj] = mag_temp[jj];  
          }  
+         //pc.printf("move it \r\n");  
          wait(1);  
      }  
        
@@ -120,7 +119,7 @@ void initMag(uint8_t id, int32_t Maxes[3], float *hardCor, float *softCor){
      hardCor[Y] = (float) mag_bias[Y] * sensitivity;     
      hardCor[Z] = (float) mag_bias[Z] * sensitivity;    
      
-     //Get soft iron correction
+     /*Get soft iron correction
      mag_scale[0]  = (mag_max[0] - mag_min[0])/2;  // get average x axis max chord length in counts
      mag_scale[1]  = (mag_max[1] - mag_min[1])/2;  // get average y axis max chord length in counts
      mag_scale[2]  = (mag_max[2] - mag_min[2])/2;  // get average z axis max chord length in counts
@@ -131,13 +130,11 @@ void initMag(uint8_t id, int32_t Maxes[3], float *hardCor, float *softCor){
      softCor[0] = avg_rad/((float)mag_scale[0]);
      softCor[1] = avg_rad/((float)mag_scale[1]);
      softCor[2] = avg_rad/((float)mag_scale[2]);
+     
+     //pc.printf("Soft Iron Correction:  %f, %f, %f\r\n", softCor[X], softCor[Y], softCor[Z]);  
+     */ 
 
-    //Calculated average hard-iron correction values 
-    //Tried this, didn't give a good result --> calibration re-added.
-    //hardCor[X] = 171.50;  
-    //hardCor[Y] = -252.33;     
-    //hardCor[Z] = -445.67;  
-
+    //Put magnetometer back in single mode (1 measurement)
     LSM303AGR_MAG_W_MD(magnetometer, LSM303AGR_MAG_MD_SINGLE_MODE );
     magnetometer->get_m_axes(Maxes);
     magnetometer->disable();
@@ -184,17 +181,30 @@ int main() {
     int32_t Maxes[3];
     float roll_rad=0, pitch_rad=0;
     float yaw_rad=0, degree=0, godr=0;
-    float temp[3] = {}, hardCor[3] = {}, softCor[3] = {};
+    float temp[3] = {}, hardCor[3] = {};
+    /*      Only initialise when waken up
+    //Initialisation interrupts
+    intPinMag.rise(&magHandle);
+    intAcc.mode(PullDown);
+    intAcc.rise(&accHandle);
+    intWakeUp.rise(&wakeHandle);
+    wakeTimer.attach(&timerHandle, 1); //(function, time in seconds)
+    
+    initMag(id, Maxes, hardCor);
+    initAcc(id, Aaxes);
+    
+    Serial4.attach(&Rx_interrupt, Serial::RxIrq); // Setup a serial interrupt function to receive data
+    */
     
     while(1) {
         if(wakeReady) {
+            //pc.printf("Wakey wakey!\r\n");  
             //Initialisation interrupts
+            powerD7=1;  
             wakeGPS=0;
             
-            initMag(id, Maxes, hardCor, softCor);
+            initMag(id, Maxes, hardCor);
             initAcc(id, Aaxes);
-            
-            powerD7=1;  
             
             intPinMag.rise(&magHandle);
             button.rise(&buttonHandle);
@@ -203,8 +213,7 @@ int main() {
             intWakeUp.rise(NULL);
             wakeTimer.attach(&timerHandle, 1); //(function, time in seconds)
             
-            //Serial4.attach(&D7Handle, Serial::RxIrq); // Setup a serial interrupt function to receive data
-            
+            Serial4.attach(&D7Handle, Serial::RxIrq); // Setup a serial interrupt function to receive data
             wakeReady=false;
         }
         /* Enable sensors when timerReady interrupt is received */
@@ -236,11 +245,6 @@ int main() {
             Maxes[X] = Maxes[X]-hardCor[X];
             Maxes[Y] = Maxes[Y]-hardCor[Y];
             Maxes[Z] = Maxes[Z]-hardCor[Z];
-            
-            //Apply soft iron correction to the received values
-            Maxes[X] = Maxes[X]*softCor[X];
-            Maxes[Y] = Maxes[Y]*softCor[Y];
-            Maxes[Z] = Maxes[Z]*softCor[Z];
             
             magDone=true;
             magReady=false;
@@ -296,6 +300,7 @@ int main() {
             else if(degree > 337.25 || degree < 22.5) {
                 direction = 0;                          //W
             }
+            //pc.printf("degree: %d\r\n", direction);
             magnetometer->get_m_odr(&godr);
             sendBytes(direction);
             
@@ -307,22 +312,22 @@ int main() {
             if(buttonPress) {
             //if(read == '3')
                 buttonPress=false;
-                shutdown = true;// enable GPS via jumper
+                shutdown = true;// enable GPS via other UART (wired with jumpers)
             }
             D7Ready = false;
         }
         if(shutdown) {
-            //Enable GPS via jumper and shutdown compass
+            //pc.printf("shut it! \r\n");  
+            //Initialisation interrupts
             intPinMag.rise(NULL);
             intAcc.rise(NULL);
-            button.rise(NULL);
             intWakeUp.rise(&wakeHandle);
-            wakeTimer.attach(NULL, 1000);
+            wakeTimer.attach(NULL, 1); //(function, time in seconds)
             
             magnetometer->disable();
             accelerometer->disable();
             
-            //Serial4.attach(NULL, Serial::RxIrq); // Setup a serial interrupt function to receive data
+            Serial4.attach(NULL, Serial::RxIrq); // Setup a serial interrupt function to receive data
             
             powerD7=0;
             wakeGPS=1;
