@@ -107,7 +107,7 @@ int main(void)
 	   */
 	  while(notEnabled)
 	  {
-		  HAL_UART_Transmit(&huart2, "Not yet \n\r",sizeof("Not yet \n\r"), HAL_MAX_DELAY);
+		  HAL_UART_Transmit(&huart2, "Not enabled \n\r",sizeof("Not enabled \n\r"), HAL_MAX_DELAY);
 		  /* Low power sleep mode with longer wake up time compared to "PWR_MAINREGULATOR_ON" */
 		  enterSleep(PWR_LOWPOWERREGULATOR_ON);
 	  }
@@ -190,9 +190,6 @@ int main(void)
 	  				{
 	  					buflongitude[j] = longitude[j];
 	  				}
-
-	  				uint8_t AT_COMMAND[] = { 0x41, 0x54, 0x2b, 0x53, 0x45, 0x4e,
-	  				                        0x44, 0x3d, 0x31, 0x32, 0x3a };
 
 	  				/* Merge the desired fields in 1 array. */
 	  				for (j = 0; j < 27; j++)
