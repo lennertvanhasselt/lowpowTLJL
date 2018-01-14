@@ -214,11 +214,9 @@ int main(void)
 	  						sendbuffer[j] = hdop[j - 24];
 	  					}
 	  				}
-	  				HAL_UART_Transmit(&huart2, AT_COMMAND, sizeof(AT_COMMAND),HAL_MAX_DELAY);
 					HAL_UART_Transmit(&huart2, sendbuffer, sizeof(sendbuffer),HAL_MAX_DELAY);
 					HAL_UART_Transmit(&huart2, (uint8_t*) "\n\r", sizeof("\n\r"),HAL_MAX_DELAY);
 
-	  				HAL_UART_Transmit(&huart3, AT_COMMAND, sizeof(AT_COMMAND),HAL_MAX_DELAY);
 	  				HAL_UART_Transmit(&huart3, sendbuffer, sizeof(sendbuffer),HAL_MAX_DELAY);
 	  				HAL_UART_Transmit(&huart3, (uint8_t*) "\n\r", sizeof("\n\r"),HAL_MAX_DELAY);
 	  			}
