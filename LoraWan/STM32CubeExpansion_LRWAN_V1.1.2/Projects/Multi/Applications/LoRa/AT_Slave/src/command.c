@@ -114,7 +114,7 @@ static const struct ATCommand_s ATCommand[] =
     .help_string = "AT"AT_DEUI ": Get the Device EUI\r\n",
 #endif
     .get = at_DevEUI_get,
-    .set = at_DevEUI_set,
+    .set = at_DevEUI_set,				//added to enable manual DevEUI setting
     .run = at_return_error,
   },
 #endif

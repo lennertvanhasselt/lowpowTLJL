@@ -186,6 +186,8 @@ ATEerror_t at_DevEUI_get(const char *param)
   return AT_OK;
 }
 
+/* Added function to set DevEUI*/
+/* Same method as other set functions*/
 ATEerror_t at_DevEUI_set(const char *param)
 {
 	  uint8_t DevEui[8];

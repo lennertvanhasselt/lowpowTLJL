@@ -93,17 +93,20 @@ extern "C" {
  *
  * \remark see STATIC_DEVICE_EUI comments
  */
+//static device EUI can be changed through AT commands
 #define LORAWAN_DEVICE_EUI                          { 0xBE, 0x7A, 0x00, 0x00, 0x00, 0x00, 0x1B, 0x96 }
 
 
 /**
  * Application IEEE EUI (big endian)
  */
+//static APP EUI can be changed through AT commands
 #define LORAWAN_APPLICATION_EUI                     { 0xBE, 0x7A, 0x00, 0x00, 0x00, 0x00, 0x0D, 0x9F }
 
 /**
  * AES encryption/decryption cipher application key
  */
+//static APP KEY can be changed through AT commands
 #define LORAWAN_APPLICATION_KEY                     { 0x32, 0xAF, 0x39, 0xEE, 0x3B, 0xA5, 0xFD, 0xFB, 0xF0, 0x58, 0xB8, 0xC5, 0x42, 0xAD, 0xAA, 0x86 }
 
 /**
@@ -123,16 +126,19 @@ extern "C" {
  *
  * \remark see STATIC_DEVICE_ADDRESS comments
  */
-#define LORAWAN_DEVICE_ADDRESS                      ( uint32_t )0x0100000a
+//static device address can be changed through AT commands
+#define LORAWAN_DEVICE_ADDRESS                      ( uint32_t )0x0006fdc4d
 
 /**
  * AES encryption/decryption cipher network session key
  */
+//static Network session key can be changed through AT commands
 #define LORAWAN_NWKSKEY                             { 0xD9, 0xCB, 0x80, 0x0F, 0x22, 0x09, 0xCF, 0x43, 0x37, 0x10, 0x4B, 0x51, 0x08, 0xC7, 0x65, 0x71 }
 
 /**
  * AES encryption/decryption cipher application session key
  */
+//static application session key can be changed through AT commands
 #define LORAWAN_APPSKEY                             { 0x79, 0xDE, 0xD9, 0x7C, 0xF6, 0x41, 0x28, 0xA6, 0x8F, 0x2D, 0x65, 0xB5, 0x44, 0xCE, 0xC7, 0xAC }
 
 #ifdef __cplusplus
